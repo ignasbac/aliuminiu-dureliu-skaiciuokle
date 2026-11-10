@@ -1,0 +1,1971 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gamybos Skaičiuoklė</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: #f0f2f5; 
+            margin: 0; 
+            min-height: 100vh; 
+            box-sizing: border-box; 
+            display: flex;
+            flex-direction: column;
+        }
+
+        .calc-layout {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            height: 100vh;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        .controls { 
+            width: 440px; 
+            background: white; 
+            padding: 15px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
+            overflow-y: auto; 
+            flex-shrink: 0; 
+        }
+        .preview-area { 
+            flex: 1; 
+            background: #dfe6e9; 
+            padding: 20px; 
+            border-radius: 12px; 
+            display: flex; 
+            gap: 25px; 
+            align-items: flex-start; 
+            justify-content: center; 
+            overflow: auto; 
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 850px) {
+            .calc-layout { flex-direction: column; height: auto; overflow-y: auto; }
+            .controls, .preview-area { width: 100%; max-height: none; }
+        }
+        
+        .checkbox-wrapper { display: flex; align-items: center; cursor: pointer; user-select: none; margin: 8px 0; width: fit-content; }
+        .checkbox-wrapper input { width: 16px; height: 16px; margin: 0 6px 0 0; cursor: pointer; }
+        .checkbox-wrapper span { font-size: 12px; font-weight: 600; color: #2c3e50; }
+
+        .drawing-container { display: flex; flex-direction: column; align-items: center; gap: 6px; page-break-inside: avoid; }
+        .drawing-label { font-weight: bold; color: #2d3436; text-transform: uppercase; font-size: 11px; background: #fff; padding: 3px 10px; border-radius: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        
+        .drawing-dims-header { 
+            font-size: 13px; font-weight: 800; color: #000; margin-bottom: 2px; display: flex; align-items: center; gap: 4px; background: #ffffff; padding: 2px 8px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .drawing-dims-header input {
+            width: 52px; padding: 2px; font-size: 13px; text-align: center; font-weight: bold; border: 1px solid #3498db; background: #fffde7; border-radius: 4px; color: #2c3e50;
+        }
+
+        .drawing-qty-box {
+            display: flex; align-items: center; gap: 4px; background: #ffffff; padding: 2px 6px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 11px; font-weight: 600; color: #2c3e50;
+        }
+        .drawing-qty-box input {
+            width: 45px; padding: 2px; font-size: 12px; text-align: center; font-weight: bold; border: 1px solid #000000; border-radius: 4px; background: #fff;
+        }
+
+        .input-group { margin-bottom: 8px; }
+        .row { display: flex; gap: 8px; }
+        label { display: block; font-weight: 600; margin-bottom: 2px; font-size: 11px; color: #34495e; }
+        input[type="number"], input[type="text"], input[type="date"], select, textarea { width: 100%; padding: 6px; border: 1px solid #ced4da; border-radius: 5px; font-size: 13px; outline: none; box-sizing: border-box; font-family: inherit; }
+        
+        .mode-buttons { display: flex; gap: 4px; margin-bottom: 10px; }
+        .mode-buttons label { flex: 1; margin: 0; cursor: pointer; }
+        .mode-buttons input { display: none; }
+        .mode-buttons span { display: block; background: #fff; padding: 6px; text-align: center; border-radius: 5px; border: 1px solid #dee2e6; font-size: 10px; transition: 0.2s; }
+        .mode-buttons input:checked + span { background: #3498db; color: white; border-color: #2980b9; font-weight: bold; }
+
+        .drawing-box { position: relative; border: 5px solid #000000; background: #fff; }
+        .hinge-line { position: absolute; width: 25px; height: 4px; background: #000000; z-index: 5; border-radius: 2px; }
+        .milling-handle-line { position: absolute; width: 24px; height: 4px; background: #000000; z-index: 10; border-radius: 2px; transform: translateY(-50%); }
+
+        .dim-line { position: absolute; width: 1px; background: #000000; z-index: 6; }
+        .dim-line::before, .dim-line::after {
+            content: ''; position: absolute; left: -3.5px; width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent;
+        }
+        .dim-line::before { top: 0; border-bottom: 7px solid #000000; }
+        .dim-line::after { bottom: 0; border-top: 7px solid #000000; }
+        .dim-text { position: absolute; font-size: 10px; font-weight: bold; background: #ffffff; color: #000000; padding: 1px 3px; border: 1px solid #000000; z-index: 7; border-radius: 2px; white-space: nowrap; }
+
+        .handle-hole { position: absolute; width: 8px; height: 8px; background: #000000; border-radius: 50%; z-index: 10; transform: translate(-50%, -50%); }
+        .handle-dim-line { position: absolute; border-top: 1.5px dashed #000000; z-index: 8; }
+        .handle-dim-line::before, .handle-dim-line::after {
+            content: ''; position: absolute; top: -4px; width: 0; height: 0; border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+        }
+        .handle-dim-line::before { left: 0; border-right: 7px solid #000000; }
+        .handle-dim-line::after { right: 0; border-left: 7px solid #000000; }
+        .handle-v-line { position: absolute; width: 1px; border-left: 1.5px dashed #000000; z-index: 8; }
+        .handle-v-line::before, .handle-v-line::after {
+            content: ''; position: absolute; left: -4.5px; width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent;
+        }
+        .handle-v-line::before { top: 0; border-bottom: 7px solid #000000; }
+        .handle-v-line::after { bottom: 0; border-top: 7px solid #000000; }
+        .handle-dim-text { position: absolute; font-size: 9px; font-weight: bold; background: #ffffff; color: #000000; padding: 2px 5px; border: 1px solid #000000; border-radius: 3px; z-index: 15; white-space: nowrap; }
+
+        .result-card { background: #f8f9fa; border-radius: 8px; padding: 10px; margin-top: 10px; border-left: 4px solid #2ecc71; page-break-inside: avoid; }
+        .result-table { width: 100%; border-collapse: collapse; }
+        .result-table td { padding: 2px 0; font-size: 12px; }
+        .subtotal-row td { font-size: 12px; font-weight: 600; color: #34495e; padding-top: 3px; }
+        .total-price { font-size: 16px; color: #27ae60; font-weight: bold; }
+        
+        #special-options { display: none; margin-top: 6px; padding: 8px; background: #fff3cd; border-radius: 6px; border: 1px solid #ffeeba; }
+        #z23-special-wrapper { display: none; margin-top: 6px; margin-bottom: 4px; background: #e8f4f8; padding: 6px 8px; border-radius: 6px; border: 1px solid #b8e2f2; }
+
+        .hinge-codes-box { background: #edf2f7; border: 1px dashed #cbd5e0; border-radius: 5px; padding: 6px 8px; margin: 6px 0; font-size: 11px; color: #2d3748; }
+        .hinge-codes-box ul { margin: 2px 0 0 0; padding-left: 15px; }
+
+        .comment-box { background: #fff8e1; border: 1px solid #ffe082; border-radius: 5px; padding: 6px 8px; margin-top: 6px; font-size: 11px; color: #5d4037; white-space: pre-wrap; page-break-inside: avoid; }
+        .comment-box b { color: #e65100; display: block; margin-bottom: 2px; text-transform: uppercase; }
+
+        .production-box { background: #eef6fc; border: 1px solid #b8daff; border-radius: 5px; padding: 6px 8px; margin-top: 6px; font-size: 11px; color: #155724; page-break-inside: avoid; }
+        .production-box h4 { margin: 0 0 4px 0; font-size: 11px; color: #004085; text-transform: uppercase; border-bottom: 1px solid #c8e1ff; padding-bottom: 2px; }
+        .production-table { width: 100%; border-collapse: collapse; }
+        .production-table td { padding: 2px 0; color: #1b4965; }
+
+        .cart-container { background: #eef9f2; border: 1px solid #c8e6d0; border-radius: 8px; padding: 8px; margin-top: 10px; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 6px 8px; border-radius: 5px; margin-bottom: 5px; font-size: 11px; border: 1px solid #e2e8f0; }
+        .btn-add-cart { width: 100%; margin-top: 8px; padding: 8px; background: #2980b9; color: white; font-size: 12px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
+        .btn-add-cart:hover { background: #2471a3; }
+        .btn-remove-item { background: #e74c3c; color: white; border: none; border-radius: 3px; padding: 2px 6px; cursor: pointer; font-size: 10px; font-weight: bold; }
+        .btn-remove-item:hover { background: #c0392b; }
+        .btn-order { width: 100%; margin-top: 10px; padding: 10px; background: #27ae60; color: white; font-size: 14px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
+        .btn-order:hover { background: #219150; }
+
+        @media print {
+            @page { margin: 5mm; size: A4; }
+            body { 
+                background: white !important; 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact; 
+            }
+            .controls, .preview-area, .btn-add-cart, .btn-order, .cart-container { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="calc-layout">
+    <div class="controls">
+        <h3 style="margin:0 0 10px 0; color:#2c3e50; font-size: 16px;">Gamybos Skaičiuoklė v83</h3>
+        
+        <div class="row" style="margin-bottom: 8px;">
+            <div style="flex: 2;">
+                <label for="client-name">Klientas / Įmonė:</label>
+                <input type="text" id="client-name" list="clients-list" placeholder="Įveskite vardą" oninput="onClientNameInput(); draw()">
+                <datalist id="clients-list"></datalist>
+            </div>
+            <div style="flex: 1.5;">
+                <label for="order-date">Data:</label>
+                <input type="date" id="order-date" onchange="draw()">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="client-phone">Tel. nr.:</label>
+            <input type="text" id="client-phone" list="phones-list" placeholder="Įveskite telefono numerį" oninput="draw()">
+            <datalist id="phones-list"></datalist>
+        </div>
+
+        <div class="input-group">
+            <label for="miestas">Miestas:</label>
+            <select id="miestas" onchange="draw()">
+                <option value="Šiauliai" selected>Šiauliai</option>
+                <option value="Panevėžys">Panevėžys</option>
+                <option value="Klaipėda">Klaipėda</option>
+                <option value="Telšiai">Telšiai</option>
+                <option value="Kaunas">Kaunas</option>
+                <option value="Vilnius">Vilnius</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>Pasirinkite Profilį:</label>
+            <select id="profilis" onchange="checkSpecial(); updateHingeOptions(); draw();">
+                <optgroup label="Z-1 (Atimtis: -18 mm)">
+                    <option value="10" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Aliuminis C-0 (10€/m)</option>
+                    <option value="10" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Juodas matinis C-35 (10€/m)</option>
+                    <option value="12" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Juodas šlifuotas C-35S (12€/m)</option>
+                    <option value="12" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Auksas matinis C-23 (12€/m)</option>
+                    <option value="15" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Auksas blizgus AR (15€/m)</option>
+                    <option value="15" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Auksas šlifuotas C-23S (15€/m)</option>
+                    <option value="15" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Auksas tamsus C-235 (15€/m)</option>
+                    <option value="12" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Baltas matinis RAL9003 (12€/m)</option>
+                    <option value="12" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Šampanas C-32 (12€/m)</option>
+                    <option value="12" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Inox C-30S (12€/m)</option>
+                    <option value="12" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Konjakas C-33 (12€/m)</option>
+                    <option value="15" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Konjakas tamsus C-34 (spec. užsakymas) (15€/m)</option>
+                    <option value="15" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Pilkas C-31 (spec. užsakymas) (15€/m)</option>
+                    <option value="15" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Varis C-24 (spec. užsakymas) (15€/m)</option>
+                </optgroup>
+                <optgroup label="Z-4 (Atimtis: -49 mm)">
+                    <option value="15" data-nw="-20" data-nh="-20" data-cut-w="49" data-cut-h="49">Z-4 Aliuminis C-0 (15€/m)</option>
+                    <option value="15" data-nw="-20" data-nh="-20" data-cut-w="49" data-cut-h="49">Z-4 Juodas matinis C-35 (15€/m)</option>
+                    <option value="18" data-nw="-20" data-nh="-20" data-cut-w="49" data-cut-h="49">Z-4 Auksas matinis C-23 (18€/m)</option>
+                    <option value="20" data-nw="-20" data-nh="-20" data-cut-w="49" data-cut-h="49">Z-4 Auksas blizgus AR (20€/m)</option>
+                    <option value="20" data-nw="-20" data-nh="-20" data-cut-w="49" data-cut-h="49">Z-4 Auksas šlifuotas C-23S (20€/m)</option>
+                    <option value="20" data-nw="-20" data-nh="-20" data-cut-w="49" data-cut-h="49">Z-4 Baltas matinis RAL9003 (20€/m)</option>
+                    <option value="20" data-nw="-20" data-nh="-20" data-cut-w="49" data-cut-h="49">Z-4 Inox C-30S (20€/m)</option>
+                </optgroup>
+                <optgroup label="Z-10 (Atimtis: -18 mm)">
+                    <option value="10" data-nw="-5" data-nh="-6" data-cut-w="18" data-cut-h="18">Z-10 Aliuminis C-0 (10€/m)</option>
+                    <option value="10" data-nw="-5" data-nh="-6" data-cut-w="18" data-cut-h="18">Z-10 Juodas matinis C-35 (10€/m)</option>
+                    <option value="12" data-nw="-5" data-nh="-6" data-cut-w="18" data-cut-h="18">Z-10 Auksas šlifuotas C-23S (12€/m)</option>
+                    <option value="12" data-nw="-5" data-nh="-6" data-cut-w="18" data-cut-h="18">Z-10 Inox C-30S (12€/m)</option>
+                </optgroup>
+                <optgroup label="Z-11 (Atimtis: -44 mm)">
+                    <option value="13" data-nw="-1" data-nh="-1" data-cut-w="44" data-cut-h="44">Z-11 Aliuminis C-0 (13€/m)</option>
+                    <option value="13" data-nw="-1" data-nh="-1" data-cut-w="44" data-cut-h="44">Z-11 Juodas matinis C-35 (13€/m)</option>
+                    <option value="16" data-nw="-1" data-nh="-1" data-cut-w="44" data-cut-h="44">Z-11 Auksas matinis C-23 (16€/m)</option>
+                    <option value="16" data-nw="-1" data-nh="-1" data-cut-w="44" data-cut-h="44">Z-11 Baltas matinis RAL9003 (16€/m)</option>
+                    <option value="16" data-nw="-1" data-nh="-1" data-cut-w="44" data-cut-h="44">Z-11 Inox C-30S (16€/m)</option>
+                    <option value="16" data-nw="-1" data-nh="-1" data-cut-w="44" data-cut-h="44">Z-11 Konjakas C-33 (16€/m)</option>
+                </optgroup>
+                <optgroup label="Z-12 (Atimtis: -44 mm)">
+                    <option value="20" data-nw="-79" data-nh="-79" data-cut-w="44" data-cut-h="44">Z-12 Juodas šlifuotas C-35S (20€/m)</option>
+                    <option value="20" data-nw="-79" data-nh="-79" data-cut-w="44" data-cut-h="44">Z-12 Auksas šlifuotas C-23S (20€/m)</option>
+                    <option value="20" data-nw="-79" data-nh="-79" data-cut-w="44" data-cut-h="44">Z-12 Baltas RAL9003 Mat (20€/m)</option>
+                    <option value="20" data-nw="-79" data-nh="-79" data-cut-w="44" data-cut-h="44">Z-12 Inox C-30S (20€/m)</option>
+                </optgroup>
+                <optgroup label="Z-13 (Atimtis: -44 mm)">
+                    <option value="12" data-nw="-5" data-nh="-6" data-cut-w="44" data-cut-h="44">Z-13 Aliuminis C-0 (12€/m)</option>
+                    <option value="14" data-nw="-5" data-nh="-6" data-cut-w="44" data-cut-h="44">Z-13 Juodas matinis C-35 (14€/m)</option>
+                    <option value="15" data-nw="-5" data-nh="-6" data-cut-w="44" data-cut-h="44">Z-13 Auksas matinis C-23 (15€/m)</option>
+                    <option value="18" data-nw="-5" data-nh="-6" data-cut-w="44" data-cut-h="44">Z-13 Auksas šlifuotas C-23S (18€/m)</option>
+                    <option value="17" data-nw="-5" data-nh="-6" data-cut-w="44" data-cut-h="44">Z-13 Baltas RAL9003 MAT (17€/m)</option>
+                    <option value="17" data-nw="-5" data-nh="-6" data-cut-w="44" data-cut-h="44">Z-13 Inox C-30S (17€/m)</option>
+                </optgroup>
+                <optgroup label="Z-16 (Atimtis: -18 mm)">
+                    <option value="10" data-nw="-1" data-nh="-1" data-cut-w="18" data-cut-h="18">Z-16 Juodas matinis C-35 (10€/m)</option>
+                    <option value="11" data-nw="-1" data-nh="-1" data-cut-w="18" data-cut-h="18">Z-16 Auksas šlifuotas C-23S (11€/m)</option>
+                    <option value="11" data-nw="-1" data-nh="-1" data-cut-w="18" data-cut-h="18">Z-16 Šampanas C-32 (11€/m)</option>
+                    <option value="11" data-nw="-1" data-nh="-1" data-cut-w="18" data-cut-h="18">Z-16 Inox C-30S (11€/m)</option>
+                </optgroup>
+                <optgroup label="Z-18 (Atimtis: -44 mm)">
+                    <option value="13" data-nw="-0" data-nh="-0" data-cut-w="44" data-cut-h="44">Z-18 Aliuminis C-0 (13€/m)</option>
+                    <option value="13" data-nw="-0" data-nh="-0" data-cut-w="44" data-cut-h="44">Z-18 Juodas matinis C-35 (13€/m)</option>
+                    <option value="22" data-nw="-0" data-nh="-0" data-cut-w="44" data-cut-h="44">Z-18 Auksas šlifuotas C-23S (22€/m)</option>
+                    <option value="18" data-nw="-0" data-nh="-0" data-cut-w="44" data-cut-h="44">Z-18 Baltas RAL9003 MAT (18€/m)</option>
+                    <option value="16" data-nw="-0" data-nh="-0" data-cut-w="44" data-cut-h="44">Z-18 Inox C-30S (16€/m)</option>
+                </optgroup>
+                <optgroup label="Z-23 (Atimtis: -25 mm)">
+                    <option value="12" data-nw="-42" data-nh="-42" data-cut-w="25" data-cut-h="25">Z-23 Juodas matinis C-35 (12€/m)</option>
+                    <option value="15" data-nw="-42" data-nh="-42" data-cut-w="25" data-cut-h="25">Z-23 Juodas šlifuotas C-35S (15€/m)</option>
+                </optgroup>
+                <optgroup label="Z-24 (Atimtis: -25 mm)">
+                    <option value="15" data-nw="-42" data-nh="-42" data-cut-w="25" data-cut-h="25" data-special="z24">Z-24 Juodas šlifuotas C-35S (15€/m)</option>
+                    <option value="15" data-nw="-42" data-nh="-42" data-cut-w="25" data-cut-h="25" data-special="z24">Z-24 Auksas matinis C-23 (15€/m)</option>
+                    <option value="15" data-nw="-42" data-nh="-42" data-cut-w="25" data-cut-h="25" data-special="z24">Z-24 Auksas šlifuotas C-23S (15€/m)</option>
+                    <option value="15" data-nw="-42" data-nh="-42" data-cut-w="25" data-cut-h="25" data-special="z24">Z-24 Baltas RAL9003 MAT (15€/m)</option>
+                    <option value="15" data-nw="-42" data-nh="-42" data-cut-w="25" data-cut-h="25" data-special="z24">Z-24 Inox C-30S (15€/m)</option>
+                    <option value="15" data-nw="-42" data-nh="-42" data-cut-w="25" data-cut-h="25" data-special="z24">Z-24 Konjakas C-33 (15€/m)</option>
+                </optgroup>
+            </select>
+        </div>
+
+        <div class="row" style="margin-bottom: 8px;">
+            <div style="flex:1;">
+                <label>Pradinis Aukštis H (mm):</label>
+                <input type="number" id="h" value="720" onchange="updateAllDimensions('h', this.value)">
+            </div>
+            <div style="flex:1;">
+                <label>Pradinis Plotis W (mm):</label>
+                <input type="number" id="w" value="450" onchange="updateAllDimensions('w', this.value)">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Pasirinkite Stiklą:</label>
+            <select id="stiklas" onchange="checkPleveleVisibility(); draw();">
+                <option value="22">Skaidrus (22€/m²)</option>
+                <option value="32">Tonuotas pilkas (32€/m²)</option>
+                <option value="32">Tonuotas rudas (32€/m²)</option>
+                <option value="45">Tonuotas tamsiai pilkas (45€/m²)</option>
+                <option value="45">Matinis (45€/m²)</option>
+                <option value="45">Flutes (45€/m²)</option>
+                <option value="55">Flutes matinis (55€/m²)</option>
+                <option value="65">Vision sun (65€/m²)</option>
+                <option value="65">Raywal 90T (65€/m²)</option>
+                <option value="65">Stopsol rudas (65€/m²)</option>
+                <option value="65">Stopsol pilkas (65€/m²)</option>
+                <option value="34">Veidrodis skaidrus (34€/m²)</option>
+                <option value="42">Veidrodis tonuotas pilkas (42€/m²)</option>
+                <option value="42">Veidrodis tonuotas rudas (42€/m²)</option>
+                <option value="0">Be stiklo (0€)</option>
+            </select>
+            
+            <label class="checkbox-wrapper" style="margin-top: 6px;">
+                <input type="checkbox" id="tempered-glass" onchange="draw()">
+                <span>Grūdintas (+15€/m² + šlifavimas 2.50€/m)</span>
+            </label>
+        </div>
+
+        <div class="input-group" id="plevele-group" style="display: none;">
+            <label>Pasirinkite plėvelę:</label>
+            <select id="plevele" onchange="draw()">
+                <option value="0">Be plėvelės</option>
+                <option value="15">Apsauginė juoda be burbulų (+15€)</option>
+                <option value="15">Apsauginė balta be burbulų (+15€)</option>
+                <option value="15">Apsauginė pilka be burbulų (+15€)</option>
+                <option value="5">Apsauginė paprasta (+5€)</option>
+            </select>
+        </div>
+
+        <div id="z23-special-wrapper">
+            <label class="checkbox-wrapper" style="margin: 0;">
+                <input type="checkbox" id="z23-hidden-hinges" onchange="checkSpecial(); draw();">
+                <span>Naudoti paslėptus lankstus (kaip Z-24)</span>
+            </label>
+        </div>
+
+        <div class="input-group" id="hinge-type-group">
+            <label style="color:#2980b9; font-weight:bold; font-size:12px; margin-bottom:4px;">Lankstų komplektas:</label>
+            
+            <div class="row" style="margin-bottom: 6px;">
+                <div style="flex: 1;">
+                    <label>Gamintojas:</label>
+                    <select id="hinge-maker" onchange="updateHingeOptions(); draw();">
+                        <option value="none">Be lankstų</option>
+                        <option value="hettich">Hettich</option>
+                        <option value="blum">Blum</option>
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label>Spalva:</label>
+                    <select id="hinge-color" onchange="draw()">
+                        <option value="baltas">Baltas</option>
+                        <option value="juodas">Juodas</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row" style="margin-bottom: 6px;">
+                <div style="flex: 1;">
+                    <label>Tipas:</label>
+                    <select id="hinge-mount" onchange="draw()">
+                        <option value="isorinis">Išorinis</option>
+                        <option value="pusinis">Pusinis</option>
+                        <option value="vidinis">Vidinis</option>
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label>Atidarymo būdas:</label>
+                    <select id="hinge-action" onchange="draw()">
+                        <option value="pritraukimas" id="opt-action-pritraukimas">Su pritraukimu</option>
+                        <option value="tipon" id="opt-action-tipon">TIP-ON (atšokantis)</option>
+                        <option value="spyruokle" id="opt-action-spyruokle">Su spyruokle / be prit.</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <div style="flex: 1;">
+                    <label>Plokštelė:</label>
+                    <select id="hinge-plate" onchange="draw()">
+                        <option value="kryzmine">Kryžminė 3D</option>
+                        <option value="siaura">Siaura 3D</option>
+                    </select>
+                </div>
+                <div style="flex: 1;"></div>
+            </div>
+        </div>
+
+        <div id="special-options">
+            <label id="special-options-label">Z-24 Lankstų komplektas:</label>
+            <select id="z24-type" onchange="draw()">
+                <option value="55">Su stabdžiu (+55€)</option>
+                <option value="50">Be stabdžio (+50€)</option>
+            </select>
+        </div>
+
+        <hr style="border:0; border-top:1px solid #eee; margin: 10px 0;">
+
+        <div class="input-group">
+            <label style="color:#2980b9; font-weight:bold; font-size:12px; margin-bottom:4px;">Stiklo lentynėlės:</label>
+            
+            <div class="row" style="margin-bottom: 6px;">
+                <div style="flex: 2;">
+                    <label>Stiklo tipas:</label>
+                    <select id="shelf-glass-type" onchange="draw()">
+                        <option value="Skaidrus stiklas">Skaidrus stiklas</option>
+                        <option value="Tonuotas rudas">Tonuotas rudas</option>
+                        <option value="Tonuotas pilkas">Tonuotas pilkas</option>
+                        <option value="Tonuotas tamsiai pilkas">Tonuotas tamsiai pilkas</option>
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label>Storis:</label>
+                    <select id="shelf-glass-thickness" onchange="draw()">
+                        <option value="4 mm">4 mm</option>
+                        <option value="6 mm">6 mm</option>
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label>Kiekis (vnt.):</label>
+                    <input type="number" id="shelf-qty" value="0" min="0" onchange="draw()">
+                </div>
+            </div>
+
+            <div class="row" style="margin-bottom: 6px;">
+                <div style="flex: 1;">
+                    <label>Aukštis H (mm):</label>
+                    <input type="number" id="shelf-h" value="300" min="1" onchange="draw()">
+                </div>
+                <div style="flex: 1;">
+                    <label>Plotis W (mm):</label>
+                    <input type="number" id="shelf-w" value="400" min="1" onchange="draw()">
+                </div>
+            </div>
+
+            <div class="row">
+                <div style="flex: 1;">
+                    <label class="checkbox-wrapper">
+                        <input type="checkbox" id="shelf-polished" onchange="draw()">
+                        <span>Poliruotos kraštinės</span>
+                    </label>
+                </div>
+                <div style="flex: 1;">
+                    <label class="checkbox-wrapper">
+                        <input type="checkbox" id="shelf-ground" onchange="draw()">
+                        <span>Šlifuotos kraštinės</span>
+                    </label>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px;">
+                <label class="checkbox-wrapper" style="margin: 0;">
+                    <input type="checkbox" id="shelf-tempered" onchange="draw()">
+                    <span>Grūdintas</span>
+                </label>
+                <span id="shelf-edge-warning" style="color: #e74c3c; font-size: 11px; font-weight: bold; display: none;">Pasirinkite briaunos apdirbimą</span>
+            </div>
+        </div>
+
+        <hr style="border:0; border-top:1px solid #eee; margin: 10px 0;">
+
+        <div class="input-group" id="handle-section">
+            <label class="checkbox-wrapper">
+                <input type="checkbox" id="has-handle" onchange="toggleHandleSection()">
+                <span>Gręžti skyles rankenėlei</span>
+            </label>
+
+            <div id="handle-details" style="display: none; background: #f8f9fa; padding: 8px; border-radius: 6px; border: 1px dashed #b2bec3; margin-top: 4px;">
+                <div class="row">
+                    <div style="flex:1;">
+                        <label>Skylių skaičius:</label>
+                        <select id="handle-holes-count" onchange="draw()">
+                            <option value="1">1 skylė (rankenėlei-mygtukui)</option>
+                            <option value="2" selected>2 skylės</option>
+                            <option value="3">3 skylės</option>
+                            <option value="4">4 skylės</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row" id="cc-row-1" style="margin-top: 6px;">
+                    <div style="flex:1;">
+                        <label id="cc1-label">Tarp centrų C-C (mm):</label>
+                        <input type="number" id="handle-cc1" value="128" onchange="draw()">
+                    </div>
+                    <div style="flex:1;" id="cc2-wrapper">
+                        <label>Tarp 2-3 C-C (mm):</label>
+                        <input type="number" id="handle-cc2" value="128" onchange="draw()">
+                    </div>
+                </div>
+
+                <div class="row" id="cc-row-2" style="margin-top: 6px; display:none;">
+                    <div style="flex:1;" id="cc3-wrapper">
+                        <label>Tarp 3-4 C-C (mm):</label>
+                        <input type="number" id="handle-cc3" value="128" onchange="draw()">
+                    </div>
+                    <div style="flex:1;"></div>
+                </div>
+
+                <div class="row" style="margin-top: 6px;">
+                    <div style="flex:1;">
+                        <label>Matavimas nuo:</label>
+                        <select id="handle-ref-y" onchange="draw()">
+                            <option value="apacia" selected>Nuo apačios</option>
+                            <option value="virsus">Nuo viršaus</option>
+                            <option value="centras">Per vidurį</option>
+                        </select>
+                    </div>
+                    <div style="flex:1;" id="handle-y-pos-wrapper">
+                        <label id="handle-y-label">Apatinė skylė nuo apačios (mm):</label>
+                        <input type="number" id="handle-y-pos" value="100" onchange="draw()">
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top: 6px;">
+                    <div style="flex:1;">
+                        <label>Nuo krašto (mm):</label>
+                        <input type="number" id="handle-x-pos" value="35" onchange="draw()">
+                    </div>
+                    <div style="flex:1;">
+                        <label>Skylės Ø (mm):</label>
+                        <input type="number" id="handle-diameter" value="7" onchange="draw()">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-group" id="milling-handle-section">
+            <label class="checkbox-wrapper">
+                <input type="checkbox" id="has-milling-handle" onchange="toggleMillingHandleSection()">
+                <span>Frezuoti rankenėlę</span>
+            </label>
+
+            <div id="milling-handle-details" style="display: none; background: #f8f9fa; padding: 8px; border-radius: 6px; border: 1px dashed #b2bec3; margin-top: 4px;">
+                <div class="row">
+                    <div style="flex:1;">
+                        <label>Rankenėlės modelis:</label>
+                        <input type="text" id="milling-handle-model" placeholder="Įveskite modelį" onchange="draw()">
+                    </div>
+                    <div style="flex:1;">
+                        <label>Ilgis (mm):</label>
+                        <input type="number" id="milling-handle-length" value="150" placeholder="mm" onchange="draw()">
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top: 6px;">
+                    <div style="flex:1;">
+                        <label>Matavimas nuo:</label>
+                        <select id="milling-handle-ref" onchange="updateMillingHandleUI()">
+                            <option value="apacia" selected>Nuo apačios</option>
+                            <option value="virsus">Nuo viršaus</option>
+                            <option value="centras">Per vidurį</option>
+                        </select>
+                    </div>
+                    <div style="flex:1;" id="milling-handle-pos-wrapper">
+                        <label id="milling-handle-pos-label">Rankenėlės centras (mm):</label>
+                        <input type="number" id="milling-handle-pos" value="100" onchange="draw()">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <label class="checkbox-wrapper">
+            <input type="checkbox" id="mirror" checked onchange="toggleMirror()">
+            <span>Braižyti veidrodinę porą</span>
+        </label>
+
+        <div class="row">
+            <div style="flex: 1.5;">
+                <label>Pagrindinė pusė:</label>
+                <select id="puse" onchange="draw()">
+                    <option value="kaire">Kairė (L)</option>
+                    <option value="desine">Dešinė (R)</option>
+                </select>
+            </div>
+            <div style="flex: 1;">
+                <label>Pagr. kiekis:</label>
+                <input type="number" id="qtyMain" value="1" min="0" onchange="draw()">
+            </div>
+            <div style="flex: 1;" id="mirror-qty-wrapper">
+                <label>Veidr. kiekis:</label>
+                <input type="number" id="qtyMirror" value="1" min="0" onchange="draw()">
+            </div>
+        </div>
+
+        <hr style="border:0; border-top:1px solid #eee; margin: 10px 0;">
+
+        <div id="hinge-measurement-section">
+            <label>Lankstų matavimas:</label>
+            <div class="mode-buttons">
+                <label><input type="radio" name="mode" value="virsus" onchange="updateInputs()"><span>Iš viršaus</span></label>
+                <label><input type="radio" name="mode" value="apacia" onchange="updateInputs()"><span>Iš apačios</span></label>
+                <label><input type="radio" name="mode" value="abu" checked onchange="updateInputs()"><span>Nuo viršaus ir Apačios</span></label>
+            </div>
+
+            <div id="inputs-container"></div>
+        </div>
+
+        <div class="input-group" style="margin-top: 8px;">
+            <label for="order-comment">Papildomas komentaras:</label>
+            <textarea id="order-comment" rows="2" placeholder="Įrašykite papildomas pastabas ar gamybos nurodymus..." oninput="draw()"></textarea>
+        </div>
+
+        <div id="results"></div>
+
+        <button class="btn-add-cart" onclick="addToCart()">+ PRIDĖTI ŠĮ RĖMELĮ Į UŽSAKYMO KREPŠELĮ</button>
+
+        <div class="cart-container" id="cart-container" style="display:none;">
+            <label style="font-weight:bold; color:#27ae60; margin-bottom:4px;">Užsakymo krepšelis:</label>
+            <div id="cart-items-list"></div>
+        </div>
+
+        <button class="btn-order" onclick="saveCurrentClient(); sendToGoogleSheets(); printOrder();">UŽSAKYTI / SPAUSDINTI VISKĄ</button>
+    </div>
+
+    <div class="preview-area" id="preview-area"></div>
+</div>
+
+<script>
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0dkSvbPhPp8tIZ1gZuTTE9itNPM-pqNoS1kmVgsUIV0OFt-USut1qmF314WYfpVqApg/exec";
+
+let doorDimensions = {
+    main: { h: 720, w: 450 },
+    mirror: { h: 720, w: 450 }
+};
+
+let orderCart = [];
+
+function setTodayDateInput() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    document.getElementById('order-date').value = `${yyyy}-${mm}-${dd}`;
+}
+
+function getFormattedDisplayDate() {
+    const val = document.getElementById('order-date').value;
+    if (!val) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        return `${yyyy}/${mm}/${dd}`;
+    }
+    return val.replace(/-/g, '/');
+}
+
+setTodayDateInput();
+
+function loadSavedClients() {
+    const clientsData = JSON.parse(localStorage.getItem('saved_clients_data') || '[]');
+    const datalistClients = document.getElementById('clients-list');
+    const datalistPhones = document.getElementById('phones-list');
+    
+    datalistClients.innerHTML = '';
+    datalistPhones.innerHTML = '';
+
+    clientsData.forEach(item => {
+        const optC = document.createElement('option');
+        optC.value = item.name;
+        datalistClients.appendChild(optC);
+
+        if (item.phone) {
+            const optP = document.createElement('option');
+            optP.value = item.phone;
+            datalistPhones.appendChild(optP);
+        }
+    });
+}
+
+function onClientNameInput() {
+    const clientInput = document.getElementById('client-name').value.trim().toLowerCase();
+    const phoneInput = document.getElementById('client-phone');
+    
+    const clientsData = JSON.parse(localStorage.getItem('saved_clients_data') || '[]');
+    const found = clientsData.find(c => c.name.trim().toLowerCase() === clientInput);
+    
+    if (found && found.phone) {
+        phoneInput.value = found.phone;
+    }
+    draw();
+}
+
+function saveCurrentClient() {
+    const clientInputOriginal = document.getElementById('client-name').value.trim();
+    const phoneInput = document.getElementById('client-phone').value.trim();
+    
+    if (!clientInputOriginal || clientInputOriginal === 'Nenurodyta') return;
+    
+    let clientsData = JSON.parse(localStorage.getItem('saved_clients_data') || '[]');
+    const clientInputLower = clientInputOriginal.toLowerCase();
+    
+    let existingIndex = clientsData.findIndex(c => c.name.trim().toLowerCase() === clientInputLower);
+    
+    if (existingIndex >= 0) {
+        if (phoneInput) {
+            clientsData[existingIndex].phone = phoneInput;
+        }
+        clientsData[existingIndex].name = clientInputOriginal;
+    } else {
+        clientsData.push({ name: clientInputOriginal, phone: phoneInput });
+    }
+    
+    localStorage.setItem('saved_clients_data', JSON.stringify(clientsData));
+    loadSavedClients();
+}
+
+loadSavedClients();
+
+function updateAllDimensions(type, val) {
+    const num = parseInt(val) || 1;
+    if (type === 'h') {
+        doorDimensions.main.h = num;
+        doorDimensions.mirror.h = num;
+    } else {
+        doorDimensions.main.w = num;
+        doorDimensions.mirror.w = num;
+    }
+    draw();
+}
+
+function updateDrawingDimension(doorKey, dimType, val) {
+    const num = parseInt(val) || 1;
+    doorDimensions[doorKey][dimType] = num;
+    draw();
+}
+
+function toggleHandleSection() {
+    const hasHandle = document.getElementById('has-handle').checked;
+    document.getElementById('handle-details').style.display = hasHandle ? 'block' : 'none';
+    if (hasHandle) {
+        document.getElementById('handle-diameter').value = 7;
+    }
+    draw();
+}
+
+function toggleMillingHandleSection() {
+    const hasMilling = document.getElementById('has-milling-handle').checked;
+    document.getElementById('milling-handle-details').style.display = hasMilling ? 'block' : 'none';
+    updateMillingHandleUI();
+}
+
+function updateMillingHandleUI() {
+    const ref = document.getElementById('milling-handle-ref').value;
+    const posWrapper = document.getElementById('milling-handle-pos-wrapper');
+    const posLabel = document.getElementById('milling-handle-pos-label');
+
+    if (ref === 'centras') {
+        posWrapper.style.display = 'none';
+    } else {
+        posWrapper.style.display = 'block';
+        if (ref === 'apacia') {
+            posLabel.innerText = 'Rankenėlės centras nuo apačios (mm):';
+        } else {
+            posLabel.innerText = 'Rankenėlės centras nuo viršaus (mm):';
+        }
+    }
+    draw();
+}
+
+function checkSpecial() {
+    const sel = document.getElementById('profilis').selectedOptions[0];
+    const profileText = sel.text;
+    const isZ24 = (sel.dataset.special === 'z24');
+    const isExcludedHingeProfile = /(^|\s)Z-(4|11|12|13|18)(\s|$)/.test(profileText);
+    const isZ23 = /(^|\s)Z-23(\s|$)/.test(profileText);
+    const isZ23Hidden = isZ23 && document.getElementById('z23-hidden-hinges').checked;
+
+    document.getElementById('z23-special-wrapper').style.display = isZ23 ? 'block' : 'none';
+
+    const showSpecialBlock = isZ24 || isZ23Hidden;
+    document.getElementById('special-options').style.display = showSpecialBlock ? 'block' : 'none';
+    
+    if (isZ23Hidden) {
+        document.getElementById('special-options-label').innerText = 'Z-23 Paslėptų lankstų komplektas:';
+    } else if (isZ24) {
+        document.getElementById('special-options-label').innerText = 'Z-24 Lankstų komplektas:';
+    }
+
+    let hideStandardHinges = isZ24 || isExcludedHingeProfile || isZ23Hidden;
+    document.getElementById('hinge-type-group').style.display = hideStandardHinges ? 'none' : 'block';
+
+    let hideHingeMeasurements = isZ24 || isZ23Hidden;
+    document.getElementById('hinge-measurement-section').style.display = hideHingeMeasurements ? 'none' : 'block';
+}
+
+function updateHingeOptions() {
+    const selProfText = document.getElementById('profilis').selectedOptions[0].text;
+    const maker = document.getElementById('hinge-maker').value;
+    
+    const optPritraukimas = document.getElementById('opt-action-pritraukimas');
+    const optSpyruokle = document.getElementById('opt-action-spyruokle');
+    const actionSelect = document.getElementById('hinge-action');
+
+    const isRestrictedProfile = /(^|\s)Z-(1|10|16)(\s|$)/.test(selProfText);
+
+    optPritraukimas.style.display = 'block';
+    optSpyruokle.style.display = 'block';
+
+    if (isRestrictedProfile) {
+        if (maker === 'blum') {
+            optPritraukimas.style.display = 'none';
+            if (actionSelect.value === 'pritraukimas') {
+                actionSelect.value = 'tipon';
+            }
+        } else if (maker === 'hettich') {
+            optSpyruokle.style.display = 'none';
+            if (actionSelect.value === 'spyruokle') {
+                actionSelect.value = 'pritraukimas';
+            }
+        }
+    }
+}
+
+function checkPleveleVisibility() {
+    const selGlassText = document.getElementById('stiklas').selectedOptions[0].text.toLowerCase();
+    const isMirror = selGlassText.includes('veidrodis');
+    const pleveleGroup = document.getElementById('plevele-group');
+    
+    if (isMirror) {
+        pleveleGroup.style.display = 'block';
+    } else {
+        pleveleGroup.style.display = 'none';
+        document.getElementById('plevele').value = '0';
+    }
+}
+
+function toggleMirror() {
+    const mirror = document.getElementById('mirror').checked;
+    document.getElementById('mirror-qty-wrapper').style.display = mirror ? 'block' : 'none';
+    draw();
+}
+
+function updateInputs() {
+    const mode = document.querySelector('input[name="mode"]:checked').value;
+    const container = document.getElementById('inputs-container');
+    container.innerHTML = '';
+    if (mode === 'virsus') {
+        container.innerHTML = `<label>Pozicijos nuo viršaus:</label><input type="text" id="pozV" value="100, 620" onchange="draw()">`;
+    } else if (mode === 'apacia') {
+        container.innerHTML = `<label>Pozicijos nuo apačios:</label><input type="text" id="pozA" value="100, 620" onchange="draw()">`;
+    } else {
+        container.innerHTML = `<div class="row"><div style="flex:1"><label>V:</label><input type="text" id="pozV" value="100" onchange="draw()"></div><div style="flex:1"><label>A:</label><input type="text" id="pozA" value="100" onchange="draw()"></div></div>`;
+    }
+    draw();
+}
+
+function updateQtyFromDrawing(inputId, val) {
+    const newQty = parseInt(val);
+    document.getElementById(inputId).value = isNaN(newQty) ? 0 : newQty;
+    draw();
+}
+
+function createDrawing(label, doorKey, w, h, scale, side, hinges, currentQty, qtyInputId, handleInfo, millingHandleInfo) {
+    const container = document.createElement('div');
+    container.className = 'drawing-container';
+
+    const labelEl = document.createElement('div');
+    labelEl.className = 'drawing-label';
+    labelEl.innerText = label;
+    container.appendChild(labelEl);
+
+    const dimsHeader = document.createElement('div');
+    dimsHeader.className = 'drawing-dims-header';
+    dimsHeader.innerHTML = `
+        <span>Rėmas:</span>
+        <input type="number" value="${h}" min="1" onchange="updateDrawingDimension('${doorKey}', 'h', this.value)" onblur="updateDrawingDimension('${doorKey}', 'h', this.value)">
+        <span>x</span>
+        <input type="number" value="${w}" min="1" onchange="updateDrawingDimension('${doorKey}', 'w', this.value)" onblur="updateDrawingDimension('${doorKey}', 'w', this.value)">
+        <span>mm</span>
+    `;
+    container.appendChild(dimsHeader);
+
+    const qtyBox = document.createElement('div');
+    qtyBox.className = 'drawing-qty-box';
+    qtyBox.innerHTML = `<span>Kiekis:</span><input type="number" value="${currentQty}" min="0" onchange="updateQtyFromDrawing('${qtyInputId}', this.value)" onblur="updateQtyFromDrawing('${qtyInputId}', this.value)"><span>vnt.</span>`;
+    container.appendChild(qtyBox);
+
+    const box = document.createElement('div');
+    box.className = 'drawing-box';
+    box.style.width = (w * scale) + 'px';
+    box.style.height = (h * scale) + 'px';
+
+    hinges.forEach(hng => {
+        const val = hng.val;
+        const type = hng.type;
+        if (isNaN(val) || val <= 0) return;
+        let topPx = (type === 'V') ? (val * scale) : (h * scale - val * scale);
+        const mark = document.createElement('div');
+        mark.className = 'hinge-line';
+        mark.style.top = (topPx - 2) + 'px';
+        if (side === 'kaire') mark.style.left = '-12px'; else mark.style.right = '-12px';
+        box.appendChild(mark);
+
+        const dimLine = document.createElement('div');
+        dimLine.className = 'dim-line';
+        dimLine.style.height = (type === 'V' ? topPx : (h * scale - topPx)) + 'px';
+        dimLine.style.top = (type === 'V' ? 0 : topPx) + 'px';
+        const offset = type === 'V' ? 20 : 38;
+        if (side === 'kaire') dimLine.style.left = `-${offset}px`; else dimLine.style.right = `-${offset}px`;
+        box.appendChild(dimLine);
+
+        const txt = document.createElement('div');
+        txt.className = 'dim-text';
+        txt.innerText = val;
+        txt.style.top = (type === 'V' ? topPx/2 - 7 : topPx + (h*scale-topPx)/2 - 7) + 'px';
+        if (side === 'kaire') txt.style.left = `-${offset + 28}px`; else txt.style.right = `-${offset + 28}px`;
+        box.appendChild(txt);
+    });
+
+    if (handleInfo && handleInfo.active) {
+        let xPx = (side === 'kaire') ? ((w - handleInfo.xPos) * scale) : (handleInfo.xPos * scale);
+        let ccs = handleInfo.ccs;
+        let totalSpan = ccs.reduce((a, b) => a + b, 0);
+
+        let holeYPositions = [];
+        let bottomHoleY = 0;
+        let topHoleY = 0;
+
+        if (handleInfo.refY === 'apacia') {
+            bottomHoleY = h - handleInfo.yPos;
+            topHoleY = bottomHoleY - totalSpan;
+            let currY = topHoleY;
+            holeYPositions.push(currY);
+            ccs.forEach(cc => {
+                currY += cc;
+                holeYPositions.push(currY);
+            });
+        } else if (handleInfo.refY === 'virsus') {
+            topHoleY = handleInfo.yPos;
+            let currY = topHoleY;
+            holeYPositions.push(currY);
+            ccs.forEach(cc => {
+                currY += cc;
+                holeYPositions.push(currY);
+            });
+            bottomHoleY = currY;
+        } else {
+            topHoleY = (h - totalSpan) / 2;
+            let currY = topHoleY;
+            holeYPositions.push(currY);
+            ccs.forEach(cc => {
+                currY += cc;
+                holeYPositions.push(currY);
+            });
+            bottomHoleY = currY;
+        }
+
+        holeYPositions.forEach(yMm => {
+            if (yMm >= 0 && yMm <= h) {
+                const holeEl = document.createElement('div');
+                holeEl.className = 'handle-hole';
+                holeEl.style.left = xPx + 'px';
+                holeEl.style.top = (yMm * scale) + 'px';
+                box.appendChild(holeEl);
+            }
+        });
+
+        const refHoleY = (handleInfo.refY === 'apacia') ? bottomHoleY : topHoleY;
+        const handleLine = document.createElement('div');
+        handleLine.className = 'handle-dim-line';
+        handleLine.style.top = (refHoleY * scale) + 'px';
+        if (side === 'kaire') {
+            handleLine.style.left = xPx + 'px';
+            handleLine.style.width = ((w * scale) - xPx) + 'px';
+        } else {
+            handleLine.style.left = '0px';
+            handleLine.style.width = xPx + 'px';
+        }
+        box.appendChild(handleLine);
+
+        const handleTxt = document.createElement('div');
+        handleTxt.className = 'handle-dim-text';
+        handleTxt.innerText = `${handleInfo.xPos}mm (${handleInfo.count}x Ø${handleInfo.diameter}mm)`;
+        handleTxt.style.top = (refHoleY * scale - 18) + 'px';
+        if (side === 'kaire') {
+            handleTxt.style.right = '6px';
+        } else {
+            handleTxt.style.left = '6px';
+        }
+        box.appendChild(handleTxt);
+
+        const vDimLine = document.createElement('div');
+        vDimLine.className = 'handle-v-line';
+        let vLineTop = 0;
+        let vLineHeight = 0;
+        let vLabelVal = 0;
+
+        if (handleInfo.refY === 'apacia') {
+            vLineTop = bottomHoleY * scale;
+            vLineHeight = (h * scale) - vLineTop;
+            vLabelVal = Math.round(handleInfo.yPos);
+        } else if (handleInfo.refY === 'virsus') {
+            vLineTop = 0;
+            vLineHeight = topHoleY * scale;
+            vLabelVal = Math.round(handleInfo.yPos);
+        } else {
+            vLineTop = bottomHoleY * scale;
+            vLineHeight = (h * scale) - vLineTop;
+            vLabelVal = Math.round(h - bottomHoleY);
+        }
+
+        const vLineOffset = 32;
+        vDimLine.style.top = vLineTop + 'px';
+        vDimLine.style.height = vLineHeight + 'px';
+        vDimLine.style.left = (xPx + (side === 'kaire' ? -vLineOffset : vLineOffset)) + 'px';
+        box.appendChild(vDimLine);
+
+        const vDimTxt = document.createElement('div');
+        vDimTxt.className = 'handle-dim-text';
+        vDimTxt.innerText = `${vLabelVal}mm (${handleInfo.refY === 'virsus' ? 'V' : (handleInfo.refY === 'centras' ? 'Viduryje' : 'A')})`;
+        vDimTxt.style.top = (vLineTop + vLineHeight / 2 - 8) + 'px';
+        vDimTxt.style.left = (xPx + (side === 'kaire' ? -(vLineOffset + 68) : (vLineOffset + 6))) + 'px';
+        box.appendChild(vDimTxt);
+
+        const ccOffset = 28; 
+        for (let i = 0; i < ccs.length; i++) {
+            let y1 = holeYPositions[i] * scale;
+            let y2 = holeYPositions[i + 1] * scale;
+            
+            const ccLine = document.createElement('div');
+            ccLine.className = 'handle-v-line';
+            ccLine.style.top = y1 + 'px';
+            ccLine.style.height = (y2 - y1) + 'px';
+            ccLine.style.left = (xPx + (side === 'kaire' ? ccOffset : -ccOffset)) + 'px';
+            box.appendChild(ccLine);
+
+            const ccTxt = document.createElement('div');
+            ccTxt.className = 'handle-dim-text';
+            ccTxt.innerText = `C-C: ${ccs[i]}mm`;
+            ccTxt.style.top = (y1 + (y2 - y1) / 2 - 8) + 'px';
+            ccTxt.style.left = (xPx + (side === 'kaire' ? (ccOffset + 6) : -(ccOffset + 60))) + 'px';
+            box.appendChild(ccTxt);
+        }
+    }
+
+    if (millingHandleInfo && millingHandleInfo.active) {
+        let yMm = 0;
+        if (millingHandleInfo.ref === 'virsus') {
+            yMm = millingHandleInfo.pos;
+        } else if (millingHandleInfo.ref === 'apacia') {
+            yMm = h - millingHandleInfo.pos;
+        } else { 
+            yMm = h / 2;
+        }
+
+        if (yMm >= 0 && yMm <= h) {
+            let topPx = yMm * scale;
+            
+            const mark = document.createElement('div');
+            mark.className = 'milling-handle-line';
+            mark.style.top = topPx + 'px';
+            
+            if (side === 'kaire') {
+                mark.style.right = '-12px'; 
+            } else { 
+                mark.style.left = '-12px'; 
+            }
+            box.appendChild(mark);
+
+            const dimLine = document.createElement('div');
+            dimLine.className = 'handle-v-line';
+            
+            let vTop = 0;
+            let vHeight = 0;
+            let labelVal = Math.round(millingHandleInfo.pos);
+
+            if (millingHandleInfo.ref === 'virsus') {
+                vTop = 0;
+                vHeight = topPx;
+            } else if (millingHandleInfo.ref === 'apacia') {
+                vTop = topPx;
+                vHeight = (h * scale) - topPx;
+            } else { 
+                vTop = topPx;
+                vHeight = (h * scale) - topPx;
+                labelVal = Math.round(h / 2);
+            }
+
+            const mOffset = 30; 
+            dimLine.style.top = vTop + 'px';
+            dimLine.style.height = vHeight + 'px';
+            if (side === 'kaire') {
+                dimLine.style.right = `-${mOffset}px`;
+            } else {
+                dimLine.style.left = `-${mOffset}px`;
+            }
+            box.appendChild(dimLine);
+
+            const txt = document.createElement('div');
+            txt.className = 'handle-dim-text';
+            txt.style.transform = 'translateY(-100%)'; 
+            txt.style.marginBottom = '6px';
+
+            let refCodeText = millingHandleInfo.ref === 'virsus' ? 'V' : (millingHandleInfo.ref === 'centras' ? 'Viduryje' : 'Centras');
+            let lengthTxt = millingHandleInfo.length > 0 ? `, L=${millingHandleInfo.length}mm` : '';
+            txt.innerText = `${millingHandleInfo.model}${lengthTxt} (${labelVal}mm ${refCodeText})`;
+            txt.style.top = (topPx - 4) + 'px';
+            
+            const textGap = 10;
+            if (side === 'kaire') {
+                txt.style.left = `calc(100% + ${mOffset + textGap}px)`;
+            } else {
+                txt.style.right = `calc(100% + ${mOffset + textGap}px)`;
+            }
+            box.appendChild(txt);
+        }
+    }
+
+    container.appendChild(box);
+    return container;
+}
+
+function calculateAbsoluteHingesFromTop(hinges, totalH) {
+    let absoluteArr = [];
+    hinges.forEach(hng => {
+        if (isNaN(hng.val) || hng.val <= 0) return;
+        let absTop = (hng.type === 'V') ? hng.val : (totalH - hng.val);
+        if (absTop >= 0 && absTop <= totalH) {
+            absoluteArr.push(absTop);
+        }
+    });
+    return absoluteArr;
+}
+
+function getMillingInstructionsHtml(hinges, hMain, hMirror, mainSide, qtyMain, qtyMirror, isMirrorActive) {
+    function buildTableForDoor(side, qty, totalH) {
+        if (qty <= 0) return '';
+        const absFromTop = calculateAbsoluteHingesFromTop(hinges, totalH);
+        if (absFromTop.length === 0) return '';
+
+        let list = [];
+
+        if (side === 'kaire') {
+            let sorted = [...absFromTop].sort((a, b) => a - b);
+            sorted.forEach((pos, idx) => {
+                list.push(`<b>L${idx + 1}:</b> ${pos} mm`);
+            });
+        } else {
+            let absFromBottom = absFromTop.map(pos => totalH - pos);
+            let sorted = absFromBottom.sort((a, b) => a - b);
+            sorted.forEach((pos, idx) => {
+                list.push(`<b>L${idx + 1}:</b> ${pos} mm`);
+            });
+        }
+
+        const sideLabel = side === 'kaire' ? 'Kairė (Iš viršaus į apačią)' : 'Dešinė (Iš apačios į viršų)';
+        return `
+            <tr>
+                <td style="vertical-align:top; padding-top:2px;"><b>${sideLabel}</b> (${qty} vnt., H=${totalH}mm):</td>
+                <td style="text-align:right; padding-top:2px;">${list.join(' | ')}</td>
+            </tr>`;
+    }
+
+    let rowsHtml = buildTableForDoor(mainSide, qtyMain, hMain);
+    if (isMirrorActive) {
+        const mirrorSide = mainSide === 'kaire' ? 'desine' : 'kaire';
+        rowsHtml += buildTableForDoor(mirrorSide, qtyMirror, hMirror);
+    }
+
+    if (!rowsHtml) return '';
+
+    return `
+        <div class="production-box" style="margin-top:6px; border-color:#d6d8db; background:#f1f3f5; color:#212529;">
+            <h4 style="color:#343a40; border-bottom-color:#dee2e6;">Nurodymai Gamybai (Frezavimas)</h4>
+            <table class="production-table" style="color:#212529;">
+                ${rowsHtml}
+            </table>
+        </div>`;
+}
+
+function getHingeDetails() {
+    const selProfText = document.getElementById('profilis').selectedOptions[0].text;
+    const isExcludedHingeProfile = /(^|\s)Z-(4|11|12|13|18)(\s|$)/.test(selProfText);
+    const isZ24 = (document.getElementById('profilis').selectedOptions[0].dataset.special === 'z24');
+    const isZ23 = /(^|\s)Z-23(\s|$)/.test(selProfText);
+    const isZ23Hidden = isZ23 && document.getElementById('z23-hidden-hinges').checked;
+    
+    if (isExcludedHingeProfile || isZ24 || isZ23Hidden) return { text: 'Nėra (kitokie lankstai)', price: 0, codes: ['', '', ''] };
+
+    const maker = document.getElementById('hinge-maker').value;
+    if (maker === 'none') return { text: 'Be lankstų komplekto', price: 0, codes: ['', '', ''] };
+
+    const color = document.getElementById('hinge-color').value; 
+    const mount = document.getElementById('hinge-mount').value; 
+    const action = document.getElementById('hinge-action').value; 
+    const plate = document.getElementById('hinge-plate').value; 
+
+    let hingeCode = '';
+    let plateCode = '';
+    let logoCode = color === 'juodas' ? '101007' : '101005';
+    let price = 4.00;
+    let titleParts = [];
+
+    titleParts.push(maker === 'hettich' ? 'Hettich' : 'Blum');
+    
+    if (maker === 'hettich') {
+        titleParts.push(mount === 'isorinis' ? 'išorinis' : (mount === 'pusinis' ? 'pusinis' : 'vidinis'));
+        titleParts.push(color);
+
+        if (action === 'pritraukimas') {
+            price = mount === 'isorinis' ? 6.00 : (mount === 'pusinis' ? 6.50 : 7.50);
+            if (color === 'baltas') {
+                hingeCode = mount === 'isorinis' ? '100531' : (mount === 'pusinis' ? '100532' : '100533');
+            } else {
+                hingeCode = mount === 'isorinis' ? '100551' : (mount === 'pusinis' ? '100562' : '100553');
+                if (mount === 'pusinis') price = 8.50;
+            }
+            titleParts.push('(su pritraukimu)');
+        } else if (action === 'tipon') {
+            price = mount === 'isorinis' ? 5.00 : (mount === 'pusinis' ? 6.50 : 7.00);
+            if (color === 'baltas') {
+                hingeCode = '100591'; 
+            } else {
+                hingeCode = mount === 'isorinis' ? '100581' : (mount === 'pusinis' ? '100582' : '100583');
+            }
+            titleParts.push('(TIP ON)');
+        } else {
+            price = 5.00;
+            hingeCode = '100531';
+            titleParts.push('(su spyruokle)');
+        }
+
+        if (color === 'baltas') {
+            plateCode = plate === 'kryzmine' ? '101010' : '101009';
+        } else {
+            plateCode = plate === 'kryzmine' ? '101018' : '100550';
+        }
+        titleParts.push(plate === 'kryzmine' ? 'Kryžminė plokštelė 3D' : 'Siaura plokštelė 3D');
+
+    } else {
+        titleParts.push(mount === 'isorinis' ? 'išorinis' : (mount === 'pusinis' ? 'pusinis' : 'vidinis'));
+        titleParts.push(color);
+
+        if (action === 'tipon') {
+            price = color === 'baltas' ? 4.00 : 5.00;
+            hingeCode = color === 'baltas' ? '100511' : '100571';
+            titleParts.push('(TIP ON)');
+        } else if (action === 'spyruokle' || action === 'pritraukimas') {
+            price = color === 'baltas' ? 4.00 : 6.00;
+            if (mount === 'pusinis') price = 4.50;
+            if (mount === 'vidinis') price = 4.50;
+            
+            if (color === 'baltas') {
+                hingeCode = mount === 'isorinis' ? '100521' : (mount === 'pusinis' ? '100524' : '100523');
+            } else {
+                hingeCode = mount === 'isorinis' ? '100561' : '100561';
+            }
+            titleParts.push(action === 'pritraukimas' ? '(su pritraukimu)' : '(su spyruokle)');
+        }
+
+        if (color === 'baltas') {
+            plateCode = plate === 'kryzmine' ? '100306' : '100305';
+        } else {
+            plateCode = plate === 'kryzmine' ? '100440' : '100437';
+        }
+        titleParts.push(plate === 'kryzmine' ? 'Kryžminė plokštelė 3D' : 'Siaura plokštelė 3D');
+    }
+
+    titleParts.push('+ Logotipas');
+
+    return {
+        text: titleParts.join(' '),
+        price: price,
+        codes: [hingeCode, plateCode, logoCode]
+    };
+}
+
+function getGlazingFee(profileText, dH) {
+    if (/(^|\s)Z-(1|10|24)(\s|$)/.test(profileText)) {
+        if (dH <= 1200) return 6;
+        if (dH <= 1600) return 8;
+        if (dH <= 2000) return 10;
+        if (dH <= 2300) return 12;
+        if (dH <= 2600) return 14;
+        return 16;
+    } else if (/(^|\s)Z-(4|12|13)(\s|$)/.test(profileText)) {
+        if (dH <= 1200) return 7;
+        if (dH <= 1600) return 9;
+        if (dH <= 2000) return 11;
+        if (dH <= 2300) return 13;
+        if (dH <= 2600) return 15;
+        return 17;
+    } else if (/(^|\s)Z-(11|16|18)(\s|$)/.test(profileText)) {
+        if (dH <= 1200) return 8;
+        if (dH <= 1600) return 10;
+        if (dH <= 2000) return 12;
+        if (dH <= 2300) return 15;
+        if (dH <= 2600) return 17;
+        return 20;
+    }
+    return 6;
+}
+
+function gatherCurrentConfigData() {
+    const clientInput = document.getElementById('client-name').value.trim();
+    const clientName = clientInput !== '' ? clientInput : 'Nenurodyta';
+    const clientPhone = document.getElementById('client-phone').value.trim();
+    const orderDateFormatted = getFormattedDisplayDate();
+    const selectedCity = document.getElementById('miestas').value;
+
+    const h = doorDimensions.main.h;
+    const w = doorDimensions.main.w;
+    const mirror = document.getElementById('mirror').checked;
+    const hMirror = mirror ? doorDimensions.mirror.h : h;
+    const wMirror = mirror ? doorDimensions.mirror.w : w;
+    const qtyMain = parseInt(document.getElementById('qtyMain').value) || 0;
+    const qtyMirror = mirror ? (parseInt(document.getElementById('qtyMirror').value) || 0) : 0;
+    const totalQty = qtyMain + qtyMirror;
+    const mainSide = document.getElementById('puse').value;
+
+    const selProf = document.getElementById('profilis').selectedOptions[0];
+    const profileText = selProf.text;
+    const isZ24 = (selProf.dataset.special === 'z24');
+    const isExcludedHingeProfile = /(^|\s)Z-(4|11|12|13|18)(\s|$)/.test(profileText);
+    const isZ23 = /(^|\s)Z-23(\s|$)/.test(profileText);
+    const isZ23Hidden = isZ23 && document.getElementById('z23-hidden-hinges').checked;
+
+    let paintPerimeterMm = 0;
+    if (profileText.includes('Z-11') || profileText.includes('Z-18')) {
+        paintPerimeterMm = 47;
+    } else if (profileText.includes('Z-16')) {
+        paintPerimeterMm = 22;
+    }
+
+    const requiresGlassPolishing = /Z-(11|16|18)\b/.test(profileText);
+
+    let hinges = [];
+    if (!isZ24 && !isZ23Hidden) {
+        const mode = document.querySelector('input[name="mode"]:checked').value;
+        if (mode === 'virsus' || mode === 'abu') {
+            const v = document.getElementById('pozV')?.value || "";
+            v.split(',').forEach(s => { if(s.trim()) hinges.push({val: parseFloat(s.trim()), type: 'V'}) });
+        }
+        if (mode === 'apacia' || mode === 'abu') {
+            const a = document.getElementById('pozA')?.value || "";
+            a.split(',').forEach(s => { if(s.trim()) hinges.push({val: parseFloat(s.trim()), type: 'A'}) });
+        }
+    }
+
+    const hasHandle = document.getElementById('has-handle').checked;
+    const handleHolesCount = parseInt(document.getElementById('handle-holes-count').value) || 1;
+    const cc1 = parseFloat(document.getElementById('handle-cc1').value) || 128;
+    const cc2 = parseFloat(document.getElementById('handle-cc2').value) || 128;
+    const cc3 = parseFloat(document.getElementById('handle-cc3').value) || 128;
+
+    let ccs = [];
+    if (handleHolesCount === 2) ccs = [cc1];
+    else if (handleHolesCount === 3) ccs = [cc1, cc2];
+    else if (handleHolesCount === 4) ccs = [cc1, cc2, cc3];
+
+    const handleRefY = document.getElementById('handle-ref-y').value;
+    const handleYPos = parseFloat(document.getElementById('handle-y-pos').value) || 0;
+    const handleXPos = parseFloat(document.getElementById('handle-x-pos').value) || 35;
+    const handleDiameter = parseFloat(document.getElementById('handle-diameter').value) || 7;
+
+    const handleInfo = {
+        active: hasHandle,
+        count: handleHolesCount,
+        ccs: ccs,
+        refY: handleRefY,
+        yPos: handleYPos,
+        xPos: handleXPos,
+        diameter: handleDiameter
+    };
+
+    const hasMillingHandle = document.getElementById('has-milling-handle').checked;
+    const millingModel = document.getElementById('milling-handle-model').value.trim() || 'Nenurodytas';
+    const millingLength = parseFloat(document.getElementById('milling-handle-length').value) || 0;
+    const millingRef = document.getElementById('milling-handle-ref').value;
+    const millingPos = parseFloat(document.getElementById('milling-handle-pos').value) || 0;
+
+    let millingPricePerDoor = 0;
+    if (hasMillingHandle) {
+        if (millingLength <= 50) millingPricePerDoor = 10;
+        else if (millingLength <= 400) millingPricePerDoor = 15;
+        else millingPricePerDoor = 25;
+    }
+
+    const millingHandleInfo = {
+        active: hasMillingHandle,
+        model: millingModel,
+        length: millingLength,
+        ref: millingRef,
+        pos: millingPos,
+        price: millingPricePerDoor
+    };
+
+    const selGlass = document.getElementById('stiklas').selectedOptions[0];
+    const isTempered = document.getElementById('tempered-glass').checked;
+    const selGlassText = selGlass.text.toLowerCase();
+    const isGlassMirror = selGlassText.includes('veidrodis');
+    const isGlassNone = selGlass.value === "0";
+
+    let doorGlassDesc = selGlass.text.split(' (')[0];
+    if (isTempered && !isGlassNone) doorGlassDesc += " (Grūdintas)";
+
+    const pleveleGroup = document.getElementById('plevele-group');
+    const selPlevele = document.getElementById('plevele');
+    const plevelePrice = pleveleGroup.style.display !== 'none' ? (parseFloat(selPlevele.value) || 0) : 0;
+    const selPleveleOpt = selPlevele.selectedOptions[0];
+
+    const hingeInfo = getHingeDetails();
+    const hingeUnitPrice = hingeInfo.price;
+
+    const nw = parseInt(selProf.dataset.nw);
+    const nh = parseInt(selProf.dataset.nh);
+    const mPrice = parseFloat(selProf.value);
+    const glassM2Price = parseFloat(selGlass.value);
+
+    const cutMinusW = parseFloat(selProf.dataset.cutW || "0");
+    const cutMinusH = parseFloat(selProf.dataset.cutH || "0");
+
+    const hingesPerFrame = hinges.length;
+    const extraHingesPerDoor = Math.max(0, hingesPerFrame - 2);
+    
+    let extraHingeFeePerDoor = 0;
+    if (isExcludedHingeProfile) {
+        extraHingeFeePerDoor = extraHingesPerDoor * 1.00;
+    } else {
+        extraHingeFeePerDoor = extraHingesPerDoor * 2.00;
+    }
+
+    const doorHingeSetCost = hingesPerFrame * hingeUnitPrice;
+    const handleDrillingFeePerDoor = hasHandle ? (handleHolesCount * 2.00) : 0;
+
+    function calcSingleDoorPrice(dH, dW) {
+        const pCutW = dW - cutMinusW;
+        const pCutH = dH - cutMinusH;
+        const gH = dH + nh;
+        const gW = dW + nw;
+        
+        const frameAreaForGlassPricing = Math.max(0, (dH / 1000) * (dW / 1000));
+        let pureGlassCost = frameAreaForGlassPricing * glassM2Price;
+
+        const framePerimeterM = Math.max(0, ((dH + dW) * 2) / 1000);
+
+        let glassPaintingCost = 0;
+        let isPainted = false;
+        if (!isGlassMirror && !isGlassNone && paintPerimeterMm > 0 && glassM2Price > 0) {
+            isPainted = true;
+            const wM = dW / 1000;
+            const hM = dH / 1000;
+            const paintWidthM = paintPerimeterMm / 1000;
+            const innerWM = Math.max(0, wM - (2 * paintWidthM));
+            const innerHM = Math.max(0, hM - (2 * paintWidthM));
+            const paintedAreaM2 = Math.max(0, (wM * hM) - (innerWM * innerHM));
+            glassPaintingCost = paintedAreaM2 * 50;
+        }
+
+        if (glassM2Price > 0) {
+            if (isTempered) {
+                const temperingCost = frameAreaForGlassPricing * 15;
+                const grindingCost = framePerimeterM * 2.50;
+                pureGlassCost += temperingCost + grindingCost;
+            } 
+            else if (requiresGlassPolishing) {
+                const polishingCost = framePerimeterM * 3.00;
+                pureGlassCost += polishingCost;
+            }
+        }
+
+        const glazingFee = getGlazingFee(profileText, dH);
+
+        let pureFrameCost = (((dW + dH) * 2) / 1000 * mPrice) + plevelePrice + doorHingeSetCost + glazingFee + extraHingeFeePerDoor + handleDrillingFeePerDoor + millingPricePerDoor;
+        if (isZ24 || isZ23Hidden) {
+            const z24Val = parseFloat(document.getElementById('z24-type').value);
+            pureFrameCost += z24Val;
+        }
+
+        const totalSinglePrice = pureFrameCost + pureGlassCost + glassPaintingCost;
+
+        return { 
+            price: totalSinglePrice, 
+            frameCost: pureFrameCost, 
+            glassCost: pureGlassCost, 
+            paintingCost: glassPaintingCost, 
+            isPainted: isPainted,
+            pCutW, pCutH, gW, gH 
+        };
+    }
+
+    const mainDoorCalc = calcSingleDoorPrice(h, w);
+    const mirrorDoorCalc = mirror ? calcSingleDoorPrice(hMirror, wMirror) : null;
+
+    let totalFrameOnlyPrice = (mainDoorCalc.frameCost * qtyMain);
+    let totalGlassOnlyPrice = (mainDoorCalc.glassCost * qtyMain);
+    let totalPaintingOnlyPrice = (mainDoorCalc.paintingCost * qtyMain);
+
+    if (mirror && mirrorDoorCalc) {
+        totalFrameOnlyPrice += (mirrorDoorCalc.frameCost * qtyMirror);
+        totalGlassOnlyPrice += (mirrorDoorCalc.glassCost * qtyMirror);
+        totalPaintingOnlyPrice += (mirrorDoorCalc.paintingCost * qtyMirror);
+    }
+
+    let totalDoorsPrice = totalFrameOnlyPrice + totalGlassOnlyPrice + totalPaintingOnlyPrice;
+
+    const shelfQty = parseInt(document.getElementById('shelf-qty').value) || 0;
+    let shelfSummaryHtml = '';
+    let totalShelvesPrice = 0;
+    let shelfDimsDesc = "Nėra";
+    let shelfGlassDesc = "Nėra";
+    let shelfThicknessDesc = "Nėra";
+    let shelfEdgesStr = "Nėra";
+
+    const isPolished = document.getElementById('shelf-polished').checked;
+    const isGround = document.getElementById('shelf-ground').checked;
+    const isShelfTempered = document.getElementById('shelf-tempered').checked;
+    const warningEl = document.getElementById('shelf-edge-warning');
+
+    if (shelfQty > 0 && isShelfTempered && !isPolished && !isGround) {
+        warningEl.style.display = 'block';
+    } else {
+        warningEl.style.display = 'none';
+    }
+
+    if (shelfQty > 0) {
+        const shelfType = document.getElementById('shelf-glass-type').value;
+        const shelfThickness = document.getElementById('shelf-glass-thickness').value;
+        const shelfH = parseFloat(document.getElementById('shelf-h').value) || 0;
+        const shelfW = parseFloat(document.getElementById('shelf-w').value) || 0;
+        
+        let shelfM2Price = 0;
+        if (shelfThickness === '4 mm') {
+            if (shelfType === 'Skaidrus stiklas') shelfM2Price = 22;
+            else if (shelfType === 'Tonuotas rudas' || shelfType === 'Tonuotas pilkas') shelfM2Price = 32;
+            else if (shelfType === 'Tonuotas tamsiai pilkas') shelfM2Price = 45;
+        } else if (shelfThickness === '6 mm') {
+            if (shelfType === 'Skaidrus stiklas') shelfM2Price = 33;
+            else shelfM2Price = 48;
+        }
+
+        const shelfAreaM2 = (shelfH / 1000) * (shelfW / 1000);
+        const singleShelfGlassCost = shelfAreaM2 * shelfM2Price;
+        const shelfPerimeterM = ((shelfH + shelfW) * 2) / 1000;
+        let singleShelfProcessingCost = 0;
+
+        if (isGround) singleShelfProcessingCost += shelfPerimeterM * 2.50; 
+        if (isPolished) singleShelfProcessingCost += shelfPerimeterM * 3.00; 
+
+        let temperingShelfCost = isShelfTempered ? (shelfAreaM2 * 15) : 0; 
+        const singleShelfTotal = singleShelfGlassCost + singleShelfProcessingCost + temperingShelfCost;
+        totalShelvesPrice = singleShelfTotal * shelfQty;
+
+        let edgesArr = [];
+        if (isPolished) edgesArr.push('Poliruotos kr.');
+        if (isGround) edgesArr.push('Šlifuotos kr.');
+        if (isShelfTempered) edgesArr.push('Grūdintas');
+        shelfEdgesStr = edgesArr.length > 0 ? edgesArr.join(', ') : 'Nėra';
+        let edgesTxt = edgesArr.length > 0 ? ` (${edgesArr.join(', ')})` : '';
+
+        shelfDimsDesc = `${shelfH} x ${shelfW} mm`;
+        shelfGlassDesc = shelfType;
+        shelfThicknessDesc = shelfThickness;
+
+        shelfSummaryHtml = `<tr><td colspan="2"><b>Stiklo lentynėlės:</b> <span style="color:#2980b9; font-weight:bold;">${shelfDimsDesc} | ${shelfGlassDesc} ${shelfThicknessDesc} | Kiekis: ${shelfQty} vnt.${edgesTxt}</span></td></tr>`;
+    }
+
+    const totalOrderPrice = totalDoorsPrice + totalShelvesPrice;
+
+    let hingeText = hingeInfo.text;
+    if (extraHingesPerDoor > 0) {
+        const feeRate = isExcludedHingeProfile ? 1 : 2;
+        hingeText += ` (+${extraHingeFeePerDoor}€ už ${extraHingesPerDoor} papild. lankst. po ${feeRate}€)`;
+    }
+
+    if (isZ24 || isZ23Hidden) {
+        const z24Text = document.getElementById('z24-type').selectedOptions[0].text;
+        hingeText = (isZ24 ? "Z-24" : "Z-23") + " Paslėptų lankstų komplektas (" + z24Text + ")";
+    }
+
+    const totalHingesCount = hingesPerFrame * totalQty;
+    let hingeCodesHtml = '';
+    const rawHingeCodes = hingeInfo.codes;
+    if (!isZ24 && !isZ23Hidden && !isExcludedHingeProfile && document.getElementById('hinge-maker').value !== 'none' && totalHingesCount > 0) {
+        let codesList = [];
+        if (rawHingeCodes[0]) codesList.push(`<li>Lanksto kodas: <b>${rawHingeCodes[0]}</b> — ${totalHingesCount} vnt.</li>`);
+        if (rawHingeCodes[1]) codesList.push(`<li>Plokštelės kodas: <b>${rawHingeCodes[1]}</b> — ${totalHingesCount} vnt.</li>`);
+        if (rawHingeCodes[2]) codesList.push(`<li>Logotipo kodas: <b>${rawHingeCodes[2]}</b> — ${totalHingesCount} vnt.</li>`);
+
+        if (codesList.length > 0) {
+            hingeCodesHtml = `<div class="hinge-codes-box"><b>Reikalingos detalės (Viso lankstų kpl: ${totalHingesCount} vnt.):</b><ul>${codesList.join('')}</ul></div>`;
+        }
+    }
+
+    let qtyDetailsText = `${totalQty} vnt.`;
+    let dimsSummaryHtml = `<tr><td><b>Gaminio dydis:</b> <b style="font-size:13px; color:#000;">${h} x ${w} mm</b></td><td style="text-align:right;"><b>Pjovimas:</b> ${mainDoorCalc.pCutH} x ${mainDoorCalc.pCutW} mm</td></tr>`;
+    
+    let glassSummaryHtml = `<tr><td><b>Stiklas:</b> ${doorGlassDesc}</td><td style="text-align:right;"><b>Stiklo matmenys:</b> ${mainDoorCalc.gH} x ${mainDoorCalc.gW} mm</td></tr>`;
+
+    let paintPerimeterHtml = '';
+    if (paintPerimeterMm > 0 && !isGlassMirror && !isGlassNone && glassM2Price > 0) {
+        paintPerimeterHtml = `<tr><td colspan="2"><b>Dažomas perimetras:</b> <span style="color:#2980b9; font-weight:bold;">${paintPerimeterMm} mm (įskaičiuota į sumą)</span></td></tr>`;
+    }
+
+    let dimsShortTxt = `${h}x${w} mm`;
+    let doorGlassDimsStr = `${mainDoorCalc.gH} x ${mainDoorCalc.gW} mm`;
+
+    if (qtyMain > 0) {
+        if (qtyMain > 1) {
+            doorGlassDimsStr = `${mainDoorCalc.gH} x ${mainDoorCalc.gW} mm (${qtyMain} vnt.)`;
+        } else {
+            doorGlassDimsStr = `${mainDoorCalc.gH} x ${mainDoorCalc.gW} mm`;
+        }
+    }
+
+    if (mirror) {
+        const otherSide = mainSide === 'kaire' ? 'desine' : 'kaire';
+        qtyDetailsText = `Viso: ${totalQty} vnt. (${qtyMain} ${mainSide}, ${qtyMirror} ${otherSide})`;
+        dimsSummaryHtml = `
+            <tr><td colspan="2"><b>Pagrindinės (${mainSide}):</b> ${h}x${w} mm | Pjovimas: ${mainDoorCalc.pCutH}x${mainDoorCalc.pCutW} mm | Stiklas: ${mainDoorCalc.gH}x${mainDoorCalc.gW} mm (${qtyMain} vnt.)</td></tr>
+            <tr><td colspan="2"><b>Veidrodinės (${otherSide}):</b> ${hMirror}x${wMirror} mm | Pjovimas: ${mirrorDoorCalc.pCutH}x${mirrorDoorCalc.pCutW} mm | Stiklas: ${mirrorDoorCalc.gH}x${mirrorDoorCalc.gW} mm (${qtyMirror} vnt.)</td></tr>
+        `;
+        glassSummaryHtml = `<tr><td colspan="2"><b>Stiklo tipas:</b> ${doorGlassDesc}</td></tr>`;
+        dimsShortTxt = `${h}x${w}mm ir ${hMirror}x${wMirror}mm`;
+        
+        let mainStr = `${mainDoorCalc.gH}x${mainDoorCalc.gW}mm (${qtyMain} vnt.)`;
+        let mirrorStr = `${mirrorDoorCalc.gH}x${mirrorDoorCalc.gW}mm (${qtyMirror} vnt.)`;
+        doorGlassDimsStr = `${mainStr} / ${mirrorStr}`;
+    }
+
+    let pleveleSummaryHtml = (plevelePrice > 0 && pleveleGroup.style.display !== 'none') ? `<tr><td colspan="2"><b>Plėvelė:</b> ${selPleveleOpt.text}</td></tr>` : '';
+
+    let handleInfoText = 'Nėra';
+    if (hasHandle) {
+        let ccsText = ccs.length > 0 ? ` | C-C: ${ccs.join('/')} mm` : '';
+        let posText = handleRefY === 'centras' ? 'Per vidurį' : (handleRefY === 'apacia' ? 'Apatinė skylė nuo apačios' : 'Viršutinė skylė nuo viršaus') + ' ' + handleYPos + ' mm';
+        handleInfoText = `${handleHolesCount} skylės Ø${handleDiameter} mm${ccsText} | ${posText} | Nuo krašto: ${handleXPos} mm`;
+    }
+
+    let millingHandleInfoText = '';
+    if (hasMillingHandle) {
+        let posMillingText = millingRef === 'centras' ? 'Per vidurį' : (millingRef === 'apacia' ? 'Nuo apačios (centras) ' + millingPos + ' mm' : 'Nuo viršaus (centras) ' + millingPos + ' mm');
+        millingHandleInfoText = `<tr><td colspan="2"><b>Rankenėlės frezavimas:</b> <span style="color:#2980b9; font-weight:bold;">Modelis: ${millingModel} | Ilgis: ${millingLength} mm (+${millingPricePerDoor}€/rėmui) | ${posMillingText}</span></td></tr>`;
+    }
+
+    const hasAnyPainted = mainDoorCalc.isPainted || (mirrorDoorCalc && mirrorDoorCalc.isPainted);
+    const hasAnyTempered = (isTempered && glassM2Price > 0) || (shelfQty > 0 && shelfSummaryHtml.includes('Grūdintas'));
+
+    let temperedTermHtml = '';
+    if (hasAnyTempered || hasAnyPainted) {
+        temperedTermHtml = `<tr><td colspan="2" style="color:#e67e22; font-weight:bold; padding-top:2px;">Gamybos terminas 3-4 savaitės</td></tr>`;
+    }
+
+    const millingHtml = (isZ24 || isZ23Hidden) ? '' : getMillingInstructionsHtml(hinges, h, hMirror, mainSide, qtyMain, qtyMirror, mirror);
+
+    const userComment = document.getElementById('order-comment').value.trim();
+    let commentHtml = '';
+    if (userComment !== '') {
+        commentHtml = `<div class="comment-box"><b>Gamybos pastabos / komentaras:</b>${userComment.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`;
+    }
+
+    let priceBreakdownHtml = '';
+    let rowsArr = [];
+    if (totalQty > 0) {
+        rowsArr.push(`<tr class="subtotal-row"><td>Durelės (rėmas, lankstai, darb.):</td><td style="text-align:right;">${totalFrameOnlyPrice.toFixed(2)} €</td></tr>`);
+        if (glassM2Price > 0) {
+            rowsArr.push(`<tr class="subtotal-row"><td>Stiklas:</td><td style="text-align:right;">${totalGlassOnlyPrice.toFixed(2)} €</td></tr>`);
+        }
+        if (totalPaintingOnlyPrice > 0) {
+            rowsArr.push(`<tr class="subtotal-row"><td>Stiklo dažymas:</td><td style="text-align:right;">${totalPaintingOnlyPrice.toFixed(2)} €</td></tr>`);
+        }
+    }
+    if (shelfQty > 0) {
+        rowsArr.push(`<tr class="subtotal-row"><td>Lentynėlės:</td><td style="text-align:right;">${totalShelvesPrice.toFixed(2)} €</td></tr>`);
+    }
+
+    priceBreakdownHtml = `
+        ${rowsArr.join('')}
+        <tr><td colspan="2" style="text-align:right; padding-top:6px; border-top: 2px solid #2ecc71;" class="total-price">Viso: ${totalOrderPrice.toFixed(2)} €</td></tr>
+    `;
+
+    const summaryHtmlContent = `
+        <div class="result-card">
+            <table class="result-table">
+                <tr><td><b>Klientas:</b> ${clientName} ${clientPhone ? '(' + clientPhone + ')' : ''}</td><td style="text-align:right;"><b>Miestas:</b> ${selectedCity}</td></tr>
+                <tr><td><b>Data:</b> ${orderDateFormatted}</td><td style="text-align:right;"><b>Kiekis:</b> ${qtyDetailsText}</td></tr>
+                <tr><td colspan="2"><b>Profilis:</b> ${profileText}</td></tr>
+                ${dimsSummaryHtml}
+                ${glassSummaryHtml}
+                ${paintPerimeterHtml}
+                ${pleveleSummaryHtml}
+                <tr><td colspan="2"><b>Lankstai:</b> ${hingeText}</td></tr>
+                ${shelfSummaryHtml}
+                ${temperedTermHtml}
+                ${hasHandle ? `<tr><td colspan="2"><b>Skylės rankenėlei:</b> <span style="color:#d35400; font-weight:bold;">${handleInfoText}</span></td></tr>` : ''}
+                ${millingHandleInfoText}
+                ${priceBreakdownHtml}
+            </table>
+            ${hingeCodesHtml}
+            ${millingHtml}
+            ${commentHtml}
+        </div>
+    `;
+
+    const maxW = Math.max(w, wMirror);
+    const maxH = Math.max(h, hMirror);
+    const scale = Math.min(250 / maxW, 320 / maxH);
+
+    const tempDiv = document.createElement('div');
+    tempDiv.style.display = 'flex';
+    tempDiv.style.gap = '20px';
+    tempDiv.style.alignItems = 'flex-start';
+
+    tempDiv.appendChild(createDrawing('Pagrindinė ('+mainSide+')', 'main', w, h, scale, mainSide, hinges, qtyMain, 'qtyMain', handleInfo, millingHandleInfo));
+    if (mirror) {
+        const otherSide = mainSide === 'kaire' ? 'desine' : 'kaire';
+        tempDiv.appendChild(createDrawing('Veidrodinė ('+otherSide+')', 'mirror', wMirror, hMirror, scale, otherSide, hinges, qtyMirror, 'qtyMirror', handleInfo, millingHandleInfo));
+    }
+
+    const fullCardWithDrawings = summaryHtmlContent + `<div style="display:flex; gap:15px; justify-content:center; margin-top:15px; flex-wrap:wrap;">${tempDiv.innerHTML}</div>`;
+
+    return {
+        profileText: `${profileText} (${qtyDetailsText})`,
+        dimsShortTxt: dimsShortTxt,
+        qtyText: totalQty,
+        height: h,
+        width: w,
+        doorGlass: doorGlassDesc,
+        doorGlassDims: doorGlassDimsStr,
+        shelfGlass: shelfGlassDesc,
+        shelfDims: shelfDimsDesc,
+        shelfThickness: shelfThicknessDesc,
+        shelfQty: shelfQty,
+        shelfEdges: shelfEdgesStr,
+        totalPrice: totalOrderPrice,
+        summaryHtml: fullCardWithDrawings
+    };
+}
+
+function draw() {
+    const clientInput = document.getElementById('client-name').value.trim();
+    const clientName = clientInput !== '' ? clientInput : 'Nenurodyta';
+    const orderDateFormatted = getFormattedDisplayDate();
+    const selectedCity = document.getElementById('miestas').value;
+
+    if (clientInput !== '') {
+        document.title = `Užsakymas - ${clientName} - ${selectedCity} - ${orderDateFormatted}`;
+    } else {
+        document.title = `Užsakymas - ${selectedCity} - ${orderDateFormatted}`;
+    }
+
+    const currentConfig = gatherCurrentConfigData();
+    document.getElementById('results').innerHTML = currentConfig.summaryHtml.split('<div style="display:flex;')[0];
+    
+    const maxW = doorDimensions.main.w;
+    const maxH = doorDimensions.main.h;
+    const scale = Math.min(250 / maxW, 320 / maxH);
+    const mainSide = document.getElementById('puse').value;
+    const mirror = document.getElementById('mirror').checked;
+    const qtyMain = parseInt(document.getElementById('qtyMain').value) || 0;
+    const qtyMirror = mirror ? (parseInt(document.getElementById('qtyMirror').value) || 0) : 0;
+    
+    const previewContainer = document.createElement('div');
+    previewContainer.style.display = 'flex';
+    previewContainer.style.gap = '20px';
+    previewContainer.style.alignItems = 'flex-start';
+    
+    let hinges = [];
+    const mode = document.querySelector('input[name="mode"]:checked').value;
+    if (mode === 'virsus' || mode === 'abu') {
+        const v = document.getElementById('pozV')?.value || "";
+        v.split(',').forEach(s => { if(s.trim()) hinges.push({val: parseFloat(s.trim()), type: 'V'}) });
+    }
+    if (mode === 'apacia' || mode === 'abu') {
+        const a = document.getElementById('pozA')?.value || "";
+        a.split(',').forEach(s => { if(s.trim()) hinges.push({val: parseFloat(s.trim()), type: 'A'}) });
+    }
+    
+    const hasHandle = document.getElementById('has-handle').checked;
+    const handleHolesCount = parseInt(document.getElementById('handle-holes-count').value) || 1;
+    let ccs = [parseFloat(document.getElementById('handle-cc1').value) || 128];
+    const handleInfo = { active: hasHandle, count: handleHolesCount, ccs: ccs, refY: document.getElementById('handle-ref-y').value, yPos: parseFloat(document.getElementById('handle-y-pos').value) || 0, xPos: parseFloat(document.getElementById('handle-x-pos').value) || 35, diameter: 7 };
+    
+    const hasMillingHandle = document.getElementById('has-milling-handle').checked;
+    const millingHandleInfo = { active: hasMillingHandle, model: document.getElementById('milling-handle-model').value, length: parseFloat(document.getElementById('milling-handle-length').value) || 0, ref: document.getElementById('milling-handle-ref').value, pos: parseFloat(document.getElementById('milling-handle-pos').value) || 0 };
+
+    previewContainer.appendChild(createDrawing('Pagrindinė ('+mainSide+')', 'main', doorDimensions.main.w, doorDimensions.main.h, scale, mainSide, hinges, qtyMain, 'qtyMain', handleInfo, millingHandleInfo));
+    if (mirror) {
+        const otherSide = mainSide === 'kaire' ? 'desine' : 'kaire';
+        previewContainer.appendChild(createDrawing('Veidrodinė ('+otherSide+')', 'mirror', doorDimensions.mirror.w, doorDimensions.mirror.h, scale, otherSide, hinges, qtyMirror, 'qtyMirror', handleInfo, millingHandleInfo));
+    }
+    document.getElementById('preview-area').innerHTML = '';
+    document.getElementById('preview-area').appendChild(previewContainer);
+}
+
+function addToCart() {
+    const config = gatherCurrentConfigData();
+    orderCart.push(config);
+    updateCartUI();
+    alert('Rėmelis sėkmingai pridėtas į krepšelį!');
+}
+
+function removeFromCart(index) {
+    orderCart.splice(index, 1);
+    updateCartUI();
+}
+
+function updateCartUI() {
+    const container = document.getElementById('cart-container');
+    const list = document.getElementById('cart-items-list');
+    
+    if (orderCart.length === 0) {
+        container.style.display = 'none';
+        list.innerHTML = '';
+        return;
+    }
+
+    container.style.display = 'block';
+    let html = '';
+    orderCart.forEach((item, idx) => {
+        html += `
+            <div class="cart-item">
+                <div>
+                    <b>#${idx + 1}</b> ${item.profileText} <br>
+                    <span style="color:#2980b9; font-weight:bold;">Matmenys: ${item.dimsShortTxt}</span>
+                </div>
+                <div style="text-align:right;">
+                    <b>${item.totalPrice.toFixed(2)} €</b><br>
+                    <button class="btn-remove-item" onclick="removeFromCart(${idx})" style="margin-top:3px;">Pašalinti</button>
+                </div>
+            </div>
+        `;
+    });
+    list.innerHTML = html;
+}
+
+function sendToGoogleSheets() {
+    if(!GOOGLE_SCRIPT_URL) return;
+
+    const clientInput = document.getElementById('client-name').value.trim();
+    const clientName = clientInput !== '' ? clientInput : 'Nenurodyta';
+    const clientPhone = document.getElementById('client-phone').value.trim();
+    const formattedDate = getFormattedDisplayDate();
+    const selectedCity = document.getElementById('miestas').value;
+    const userComment = document.getElementById('order-comment').value.trim();
+
+    let itemsToSave = orderCart.length > 0 ? orderCart : [gatherCurrentConfigData()];
+
+    itemsToSave.forEach(item => {
+        const payload = {
+            action: "saveData",
+            orderDate: formattedDate,
+            clientName: `${clientName} ${clientPhone ? '(' + clientPhone + ')' : ''} (${selectedCity})`,
+            city: selectedCity,
+            height: item.height || doorDimensions.main.h,
+            width: item.width || doorDimensions.main.w,
+            quantity: item.qtyText || "1",
+            profile: item.profileText,
+            doorGlass: item.doorGlass || "",
+            doorGlassDims: item.doorGlassDims || "",
+            shelfGlass: item.shelfGlass || "Nėra",
+            shelfDims: item.shelfDims || "Nėra",
+            shelfThickness: item.shelfThickness || "Nėra",
+            shelfQty: item.shelfQty || 0,
+            shelfEdges: item.shelfEdges || "Nėra",
+            totalPrice: item.totalPrice,
+            comment: userComment,
+            summaryHtml: item.summaryHtml
+        };
+
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+        })
+        .catch(err => console.error("Klaida siunčiant į Google Sheets:", err));
+    });
+}
+
+function printOrder() {
+    let itemsToPrint = orderCart.length > 0 ? [...orderCart] : [gatherCurrentConfigData()];
+
+    const clientInput = document.getElementById('client-name').value.trim();
+    const clientPhone = document.getElementById('client-phone').value.trim();
+    const clientName = clientInput !== '' ? clientInput : 'Klientas';
+    const selectedCity = document.getElementById('miestas').value;
+    const orderDateVal = getFormattedDisplayDate();
+
+    let fullPrintHtml = `
+        <html>
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    body { 
+                        font-family: 'Segoe UI', sans-serif; 
+                        background: #fff !important; 
+                        margin: 0 !important; 
+                        padding: 0 !important; 
+                        color: #000; 
+                        -webkit-print-color-adjust: exact; 
+                        print-color-adjust: exact; 
+                    }
+                    .result-card { background: #f8f9fa !important; border-radius: 6px; padding: 8px; margin-top: 6px; border-left: 4px solid #2ecc71; page-break-inside: avoid; break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    .result-table { width: 100%; border-collapse: collapse; }
+                    .result-table td { padding: 1px 0; font-size: 11px; }
+                    .subtotal-row td { font-size: 11px; font-weight: 600; color: #34495e; padding-top: 2px; }
+                    .total-price { font-size: 14px; color: #27ae60; font-weight: bold; }
+                    .hinge-codes-box { background: #edf2f7 !important; border: 1px dashed #cbd5e0; border-radius: 4px; padding: 4px 6px; margin: 4px 0; font-size: 10px; color: #2d3748; page-break-inside: avoid; break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    .hinge-codes-box ul { margin: 2px 0 0 0; padding-left: 12px; }
+                    .comment-box { background: #fff8e1 !important; border: 1px solid #ffe082; border-radius: 4px; padding: 4px 6px; margin-top: 4px; font-size: 10px; color: #5d4037; page-break-inside: avoid; break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    .production-box { background: #f1f3f5 !important; border: 1px solid #d6d8db; border-radius: 4px; padding: 4px 6px; margin-top: 4px; font-size: 10px; color: #212529; page-break-inside: avoid; break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    .production-box h4 { margin: 0 0 2px 0; font-size: 10px; color: #343a40; border-bottom: 1px solid #dee2e6; padding-bottom: 1px; text-transform: uppercase; }
+                    .production-table { width: 100%; border-collapse: collapse; }
+                    .production-table td { padding: 1px 0; color: #212529; }
+                    
+                    /* Spausdinimo stiliai brėžiniams kortelės viduje su priverstiniu spalvų atvaizdavimu */
+                    .drawing-container { display: flex; flex-direction: column; align-items: center; gap: 4px; page-break-inside: avoid; break-inside: avoid; margin: 8px 0; }
+                    .drawing-label { font-weight: bold; color: #2d3436; text-transform: uppercase; font-size: 10px; background: #fff; padding: 2px 8px; border-radius: 10px; border: 1px solid #ccc; }
+                    .drawing-dims-header { font-size: 11px; font-weight: 800; color: #000; display: flex; align-items: center; gap: 4px; background: #fff; padding: 2px 6px; border: 1px solid #3498db; border-radius: 4px; }
+                    .drawing-dims-header input { border: none; background: transparent; font-size: 11px; font-weight: bold; text-align: center; width: 45px; }
+                    .drawing-qty-box { display: none !important; }
+                    .drawing-box { position: relative; border: 4px solid #000000; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    .hinge-line { position: absolute; width: 20px; height: 3px; background: #000000; z-index: 5; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    .milling-handle-line { position: absolute; width: 20px; height: 3px; background: #000000; z-index: 10; transform: translateY(-50%); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    .dim-line { position: absolute; width: 1px; background: #000000; z-index: 6; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    .dim-text { position: absolute; font-size: 9px; font-weight: bold; background: #ffffff; color: #000000; padding: 1px 2px; border: 1px solid #000000; z-index: 7; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    .handle-hole { position: absolute; width: 6px; height: 6px; background: #000000; border-radius: 50%; z-index: 10; transform: translate(-50%, -50%); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    .handle-dim-line { position: absolute; border-top: 1px dashed #000000; z-index: 8; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    .handle-v-line { position: absolute; width: 1px; border-left: 1px dashed #000000; z-index: 8; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    .handle-dim-text { position: absolute; font-size: 8px; font-weight: bold; background: #ffffff; color: #000000; padding: 1px 3px; border: 1px solid #000000; z-index: 15; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+                    @page { 
+                        size: A4;
+                        margin: 8mm; 
+                    }
+                    @media print {
+                        body { 
+                            background: #fff !important; 
+                            margin: 0 !important; 
+                            padding: 0 !important; 
+                            -webkit-print-color-adjust: exact; 
+                            print-color-adjust: exact; 
+                        }
+                        .controls, button { display: none !important; }
+                        .print-item-wrapper { page-break-inside: avoid; break-inside: avoid; margin-bottom: 10px; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div style="margin: 0; padding: 0; width: 100%;">
+                    <h3 style="margin: 0 0 4px 0; color:#2c3e50; font-size:14px;">Užsakymas: ${clientName} ${clientPhone ? '(' + clientPhone + ')' : ''} (${selectedCity}) - Data: ${orderDateVal}</h3>
+                    <hr style="border:0; border-top:1px solid #ccc; margin: 0 0 6px 0;">
+    `;
+
+    itemsToPrint.forEach((item, idx) => {
+        fullPrintHtml += `
+            <div class="print-item-wrapper">
+                <h4 style="color:#2980b9; margin:0 0 3px 0; font-size:11px;">Pozicija #${idx + 1} (${item.dimsShortTxt})</h4>
+                ${item.summaryHtml}
+            </div>
+        `;
+    });
+
+    fullPrintHtml += `</div></body></html>`;
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(fullPrintHtml);
+    printWindow.document.close();
+    
+    // Mikro-pauzė teisingam elementų suderinimui be tuščių puslapių
+    setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+    }, 400);
+}
+
+updateInputs();
+checkPleveleVisibility();
+checkSpecial();
+updateHingeOptions();
+draw();
+</script>
+
+</body>
+</html>

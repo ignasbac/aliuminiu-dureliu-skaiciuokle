@@ -1185,13 +1185,16 @@ function getHingeDetails() {
 
     let hingeCode = '';
     let plateCode = '';
-    let logoCode = color === 'juodas' ? '101007' : '101005';
+    let logoCode = '';
+    let capCode = '';
     let price = 4.00;
     let titleParts = [];
 
     titleParts.push(maker === 'hettich' ? 'Hettich' : 'Blum');
     
     if (maker === 'hettich') {
+        logoCode = color === 'juodas' ? '101007' : '101005';
+
         titleParts.push(mount === 'isorinis' ? 'išorinis' : (mount === 'pusinis' ? 'pusinis' : 'vidinis'));
         titleParts.push(color);
 
@@ -1226,6 +1229,9 @@ function getHingeDetails() {
         titleParts.push(plate === 'kryzmine' ? 'Kryžminė plokštelė 3D' : 'Siaura plokštelė 3D');
 
     } else {
+        // Blum lankstų konfigūracija
+        logoCode = ''; // Blum logotipų nenaudojam
+
         titleParts.push(mount === 'isorinis' ? 'išorinis' : (mount === 'pusinis' ? 'pusinis' : 'vidinis'));
         titleParts.push(color);
 
@@ -1252,14 +1258,37 @@ function getHingeDetails() {
             plateCode = plate === 'kryzmine' ? '100440' : '100437';
         }
         titleParts.push(plate === 'kryzmine' ? 'Kryžminė plokštelė 3D' : 'Siaura plokštelė 3D');
+
+        // Pridedame Blum dangtelius ir jų kainas
+        if (mount === 'isorinis') {
+            if (color === 'baltas') {
+                capCode = '100405';
+                price += 0.26;
+            } else {
+                capCode = '100407';
+                price += 0.36;
+            }
+        } else {
+            // Pusinis arba vidinis
+            if (color === 'baltas') {
+                capCode = '100406';
+                price += 0.25;
+            } else {
+                capCode = '1004071';
+                price += 0.23;
+            }
+        }
+        titleParts.push('+ Dangtelis');
     }
 
-    titleParts.push('+ Logotipas');
+    if (logoCode) {
+        titleParts.push('+ Logotipas');
+    }
 
     return {
         text: titleParts.join(' '),
         price: price,
-        codes: [hingeCode, plateCode, logoCode]
+        codes: [hingeCode, plateCode, logoCode, capCode]
     };
 }
 
@@ -1578,6 +1607,10 @@ function gatherCurrentConfigData() {
         if (rawHingeCodes[0]) codesList.push(`<li>Lanksto kodas: <b>${rawHingeCodes[0]}</b> — ${totalHingesCount} vnt.</li>`);
         if (rawHingeCodes[1]) codesList.push(`<li>Plokštelės kodas: <b>${rawHingeCodes[1]}</b> — ${totalHingesCount} vnt.</li>`);
         if (rawHingeCodes[2]) codesList.push(`<li>Logotipo kodas: <b>${rawHingeCodes[2]}</b> — ${totalHingesCount} vnt.</li>`);
+
+        if (rawHingeCodes[3]) {
+            codesList.push(`<li>Dangtelio kodas: <b>${rawHingeCodes[3]}</b> — ${totalHingesCount} vnt.</li>`);
+        }
 
         if (codesList.length > 0) {
             hingeCodesHtml = `<div class="hinge-codes-box"><b>Reikalingos detalės (Viso lankstų kpl: ${totalHingesCount} vnt.):</b><ul>${codesList.join('')}</ul></div>`;

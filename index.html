@@ -2007,6 +2007,65 @@ checkSpecial();
 updateHingeOptions();
 draw();
 </script>
+function resetCalculator() {
+    // Atstatome pradinius laukelius
+    const clientName = document.getElementById('client-name');
+    const clientPhone = document.getElementById('client-phone');
+    if (clientName) clientName.value = '';
+    if (clientPhone) clientPhone.value = '';
+    
+    const hInput = document.getElementById('h');
+    const wInput = document.getElementById('w');
+    if (hInput) hInput.value = '720';
+    if (wInput) wInput.value = '450';
+    
+    if (typeof doorDimensions !== 'undefined') {
+        if (doorDimensions.main) { doorDimensions.main.h = 720; doorDimensions.main.w = 450; }
+        if (doorDimensions.mirror) { doorDimensions.mirror.h = 720; doorDimensions.mirror.w = 450; }
+    }
+    
+    const qtyMain = document.getElementById('qtyMain');
+    const qtyMirror = document.getElementById('qtyMirror');
+    if (qtyMain) qtyMain.value = '1';
+    if (qtyMirror) qtyMirror.value = '1';
+    
+    const mirrorCheck = document.getElementById('mirror');
+    if (mirrorCheck) {
+        mirrorCheck.checked = true;
+        if (typeof toggleMirror === 'function') toggleMirror();
+    }
 
+    const profilis = document.getElementById('profilis');
+    const stiklas = document.getElementById('stiklas');
+    const tempered = document.getElementById('tempered-glass');
+    if (profilis) profilis.selectedIndex = 0;
+    if (stiklas) stiklas.selectedIndex = 0;
+    if (tempered) tempered.checked = false;
+    
+    // Išvalome krepšelį, jei toks naudojamas
+    if (typeof orderCart !== 'undefined') {
+        orderCart = [];
+        if (typeof updateCartUI === 'function') updateCartUI();
+    }
+    
+    // Atnaujiname vaizdą ir būsenas
+    if (typeof setTodayDateInput === 'function') setTodayDateInput();
+    if (typeof checkSpecial === 'function') checkSpecial();
+    if (typeof updateHingeOptions === 'function') updateHingeOptions();
+    if (typeof checkPleveleVisibility === 'function') checkPleveleVisibility();
+    if (typeof draw === 'function') draw();
+}
+
+function processOrderAndReset() {
+    // Jei turite funkcijas duomenų išsaugojimui/išsiuntimui, kvieskite jas čia:
+    if (typeof saveCurrentClient === 'function') saveCurrentClient();
+    if (typeof sendToGoogleSheets === 'function') sendToGoogleSheets();
+    if (typeof printOrder === 'function') printOrder();
+    
+    // Palaukiame sekundės dalį, kad spausdinimo langas spėtų atsidaryti, ir išvalome formą
+    setTimeout(() => {
+        resetCalculator();
+    }, 1000);
+}
 </body>
 </html>

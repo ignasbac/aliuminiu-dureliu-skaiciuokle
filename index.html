@@ -2006,8 +2006,8 @@ checkPleveleVisibility();
 checkSpecial();
 updateHingeOptions();
 draw();
-</script>
-function resetCalculator() {
+<script>
+    function resetCalculator() {
     const clientName = document.getElementById('client-name');
     const clientPhone = document.getElementById('client-phone');
     if (clientName) clientName.value = '';
@@ -2052,5 +2052,6 @@ function resetCalculator() {
     if (typeof checkPleveleVisibility === 'function') checkPleveleVisibility();
     if (typeof draw === 'function') draw();
 }
+</script>
 </body>
 </html>

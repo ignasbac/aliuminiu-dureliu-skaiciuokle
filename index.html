@@ -287,6 +287,7 @@
             <label>Pasirinkite Stiklą:</label>
             <select id="stiklas" onchange="checkPleveleVisibility(); draw();">
                 <option value="22">Skaidrus (22€/m²)</option>
+                <option value="35">Optiwhite (35€/m²)</option>
                 <option value="32">Tonuotas pilkas (32€/m²)</option>
                 <option value="32">Tonuotas rudas (32€/m²)</option>
                 <option value="45">Tonuotas tamsiai pilkas (45€/m²)</option>
@@ -397,6 +398,7 @@
                     <label>Stiklo tipas:</label>
                     <select id="shelf-glass-type" onchange="draw()">
                         <option value="Skaidrus stiklas">Skaidrus stiklas</option>
+                        <option value="Optiwhite">Optiwhite</option>
                         <option value="Tonuotas rudas">Tonuotas rudas</option>
                         <option value="Tonuotas pilkas">Tonuotas pilkas</option>
                         <option value="Tonuotas tamsiai pilkas">Tonuotas tamsiai pilkas</option>
@@ -406,6 +408,7 @@
                     <label>Storis:</label>
                     <select id="shelf-glass-thickness" onchange="draw()">
                         <option value="4 mm">4 mm</option>
+                        <option value="5 mm">5 mm</option>
                         <option value="6 mm">6 mm</option>
                     </select>
                 </div>
@@ -1519,9 +1522,12 @@ function gatherCurrentConfigData() {
             if (shelfType === 'Skaidrus stiklas') shelfM2Price = 22;
             else if (shelfType === 'Tonuotas rudas' || shelfType === 'Tonuotas pilkas') shelfM2Price = 32;
             else if (shelfType === 'Tonuotas tamsiai pilkas') shelfM2Price = 45;
+        } else if (shelfThickness === '5 mm') {
+            shelfM2Price = 48;
         } else if (shelfThickness === '6 mm') {
-            if (shelfType === 'Skaidrus stiklas') shelfM2Price = 33;
-            else shelfM2Price = 48;
+        if (shelfType === 'Skaidrus stiklas') shelfM2Price = 33;
+        else if (shelfType === 'Optiwhite') shelfM2Price = 48;
+        else shelfM2Price = 48;
         }
 
         const shelfAreaM2 = (shelfH / 1000) * (shelfW / 1000);

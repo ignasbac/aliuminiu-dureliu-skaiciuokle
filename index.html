@@ -2008,7 +2008,6 @@ updateHingeOptions();
 draw();
 </script>
 function resetCalculator() {
-    // Atstatome pradinius laukelius
     const clientName = document.getElementById('client-name');
     const clientPhone = document.getElementById('client-phone');
     if (clientName) clientName.value = '';
@@ -2042,30 +2041,16 @@ function resetCalculator() {
     if (stiklas) stiklas.selectedIndex = 0;
     if (tempered) tempered.checked = false;
     
-    // Išvalome krepšelį, jei toks naudojamas
     if (typeof orderCart !== 'undefined') {
         orderCart = [];
         if (typeof updateCartUI === 'function') updateCartUI();
     }
     
-    // Atnaujiname vaizdą ir būsenas
     if (typeof setTodayDateInput === 'function') setTodayDateInput();
     if (typeof checkSpecial === 'function') checkSpecial();
     if (typeof updateHingeOptions === 'function') updateHingeOptions();
     if (typeof checkPleveleVisibility === 'function') checkPleveleVisibility();
     if (typeof draw === 'function') draw();
-}
-
-function processOrderAndReset() {
-    // Jei turite funkcijas duomenų išsaugojimui/išsiuntimui, kvieskite jas čia:
-    if (typeof saveCurrentClient === 'function') saveCurrentClient();
-    if (typeof sendToGoogleSheets === 'function') sendToGoogleSheets();
-    if (typeof printOrder === 'function') printOrder();
-    
-    // Palaukiame sekundės dalį, kad spausdinimo langas spėtų atsidaryti, ir išvalome formą
-    setTimeout(() => {
-        resetCalculator();
-    }, 1000);
 }
 </body>
 </html>

@@ -429,7 +429,7 @@
                 </div>
                 <div style="flex: 1;">
                     <label>Kiekis (vnt.):</label>
-                    <input type="number" id="shelf-qty" value="0" min="0" onchange="draw()">
+                    <input type="number" id="shelf-qty" value="0" min="0" onfocus="this.select()" onchange="draw()">
                 </div>
             </div>
 
@@ -721,7 +721,11 @@ loadSavedClients();
 
 function updateAllDimensions(type, val) {
     let num = parseInt(val) || 0;
-    if (num > 3450) num = 3450;
+    if (num > 3450) {
+        num = 3450;
+        const el = document.getElementById(type);
+        if (el) el.value = 3450;
+    }
     num = Math.max(0, num);
     
     if (type === 'h') {
@@ -883,7 +887,7 @@ function updateInputs() {
     } else if (mode === 'apacia') {
         container.innerHTML = `<label>Pozicijos nuo apačios:</label><input type="text" id="pozA" value="100, 620" onchange="draw()">`;
     } else {
-        container.innerHTML = `<div class="row"><div style="flex:1"><label>V:</label><input type="text" id="pozV" value="100" onchange="draw()"></div><div style="flex:1"><label>A:</label><input type="text" id="pozA" value="100" onchange="draw()"></div></div>`;
+        container.innerHTML = `<label>Atstumas nuo kraštų (V ir A):</label><input type="number" id="pozAB" value="100" onfocus="this.select()" onchange="draw()" oninput="draw()">`;
     }
     draw();
 }
@@ -1402,13 +1406,18 @@ function gatherCurrentConfigData() {
     let hinges = [];
     if (!isZ24 && !isZ23Hidden) {
         const mode = document.querySelector('input[name="mode"]:checked').value;
-        if (mode === 'virsus' || mode === 'abu') {
+        if (mode === 'virsus') {
             const v = document.getElementById('pozV')?.value || "";
             v.split(',').forEach(s => { if(s.trim()) hinges.push({val: parseFloat(s.trim()), type: 'V'}) });
-        }
-        if (mode === 'apacia' || mode === 'abu') {
+        } else if (mode === 'apacia') {
             const a = document.getElementById('pozA')?.value || "";
             a.split(',').forEach(s => { if(s.trim()) hinges.push({val: parseFloat(s.trim()), type: 'A'}) });
+        } else {
+            const valAB = parseFloat(document.getElementById('pozAB')?.value) || 0;
+            if (valAB > 0) {
+                hinges.push({val: valAB, type: 'V'});
+                hinges.push({val: valAB, type: 'A'});
+            }
         }
     }
 
@@ -2062,7 +2071,52 @@ function printOrder() {
                         body { 
                             background: #fff !important; 
                             margin: 0 !important; 
-    ```
-*(kodas tęsiasi iki `</html>`)*
+                            padding: 0 !important; 
+                            -webkit-print-color-adjust: exact; 
+                            print-color-adjust: exact; 
+                        }
+                        .controls, button { display: none !important; }
+                        .print-item-wrapper { page-break-inside: avoid; break-inside: avoid; margin-bottom: 10px; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div style="margin: 0; padding: 0; width: 100%;">
+                    <h3 style="margin: 0 0 4px 0; color:#2c3e50; font-size:14px;">Užsakymas: ${clientName} ${clientPhone ? '(' + clientPhone + ')' : ''} (${selectedCity}) - Data: ${orderDateVal}</h3>
+                    <hr style="border:0; border-top:1px solid #ccc; margin: 0 0 6px 0;">
+    `;
 
-<FollowUp label="Ar norite, kad padedu atlikti papildomus nustatymus ar pridėti naujų funkcijų prie šios skaičiuoklės?" query="Noriu sužinoti, kaip dar galima patobulinti aliuminio profilių skaičiuoklės funkcionalumą."/>
+    itemsToPrint.forEach((item, idx) => {
+        fullPrintHtml += `
+            <div class="print-item-wrapper">
+                <h4 style="color:#2980b9; margin:0 0 3px 0; font-size:11px;">Pozicija #${idx + 1} (${item.dimsShortTxt})</h4>
+                ${item.summaryHtml}
+            </div>
+        `;
+    });
+
+    fullPrintHtml += `</div></body></html>`;
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(fullPrintHtml);
+    printWindow.document.close();
+    
+    setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+    }, 400);
+}
+
+window.addEventListener('resize', draw);
+
+toggleMirror();
+updateInputs();
+checkPleveleVisibility();
+checkSpecial();
+updateHingeOptions();
+draw();
+</script>
+
+</body>
+</html>

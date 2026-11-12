@@ -883,11 +883,11 @@ function updateInputs() {
     const container = document.getElementById('inputs-container');
     container.innerHTML = '';
     if (mode === 'virsus') {
-        container.innerHTML = `<label>Pozicijos nuo viršaus:</label><input type="text" id="pozV" value="100, 620" oninput="draw()">`;
+        container.innerHTML = `<label>Pozicijos nuo viršaus:</label><input type="text" id="pozV" value="" placeholder="pvz. 100, 620" oninput="draw()">`;
     } else if (mode === 'apacia') {
-        container.innerHTML = `<label>Pozicijos nuo apačios:</label><input type="text" id="pozA" value="100, 620" oninput="draw()">`;
+        container.innerHTML = `<label>Pozicijos nuo apačios:</label><input type="text" id="pozA" value="" placeholder="pvz. 100, 620" oninput="draw()">`;
     } else {
-        container.innerHTML = `<label>Pozicijos nuo kraštų (V ir A, pvz., 100, 620):</label><input type="text" id="pozAB" value="100, 620" oninput="draw()">`;
+        container.innerHTML = `<label>Pozicijos nuo kraštų (V ir A):</label><input type="text" id="pozAB" value="" placeholder="pvz. 100, 620" oninput="draw()">`;
     }
     draw();
 }
@@ -2014,11 +2014,13 @@ function resetCalculator() {
     checkSpecial();
     updateHingeOptions();
     checkPleveleVisibility();
+
     const modeAbux = document.querySelector('input[name="mode"][value="abu"]');
     if (modeAbux) {
         modeAbux.checked = true;
-        updateInputs();
+        updateInputs(); // Išvalo laukelį (reikšmė tampa tuščia)
     }
+
     draw();
 }
 

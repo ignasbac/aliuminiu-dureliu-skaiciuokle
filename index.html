@@ -94,7 +94,7 @@
         .mode-buttons { display: flex; gap: 4px; margin-bottom: 10px; }
         .mode-buttons label { flex: 1; margin: 0; cursor: pointer; }
         .mode-buttons input { display: none; }
-        .mode-buttons span { display: block; background: #fff; padding: 6px; text-align: center; border-radius: 5px; border: 1px solid #dee2e6; font-size: 10px; transition: 0.2s; }
+        .mode-buttons span { display: block; background: #fff; padding: 6px 4px; text-align: center; border-radius: 5px; border: 1px solid #dee2e6; font-size: 9px; transition: 0.2s; }
         .mode-buttons input:checked + span { background: #3498db; color: white; border-color: #2980b9; font-weight: bold; }
 
         .drawing-box { position: relative; border: 5px solid #000000; background: #fff; }
@@ -597,11 +597,12 @@
         <hr style="border:0; border-top:1px solid #eee; margin: 10px 0;">
 
         <div id="hinge-measurement-section">
-            <label>Lankstų matavimas (min. atstumas nuo krašto ir tarp lankstų: 70mm):</label>
+            <label>Lankstų matavimas (min. 70 mm nuo krašto ir tarp lankstų):</label>
             <div class="mode-buttons">
                 <label><input type="radio" name="mode" value="virsus" onchange="updateInputs()"><span>Iš viršaus</span></label>
                 <label><input type="radio" name="mode" value="apacia" onchange="updateInputs()"><span>Iš apačios</span></label>
-                <label><input type="radio" name="mode" value="abu" checked onchange="updateInputs()"><span>Nuo viršaus ir Apačios</span></label>
+                <label><input type="radio" name="mode" value="abu" onchange="updateInputs()"><span>Virš.+Apačia</span></label>
+                <label><input type="radio" name="mode" value="centruotai" checked onchange="updateInputs()"><span>Centruotai / Tolygiai</span></label>
             </div>
 
             <div id="inputs-container"></div>
@@ -886,8 +887,21 @@ function updateInputs() {
         container.innerHTML = `<label>Pozicijos nuo viršaus:</label><input type="text" id="pozV" value="" placeholder="pvz. 100, 620" oninput="draw()">`;
     } else if (mode === 'apacia') {
         container.innerHTML = `<label>Pozicijos nuo apačios:</label><input type="text" id="pozA" value="" placeholder="pvz. 100, 620" oninput="draw()">`;
-    } else {
+    } else if (mode === 'abu') {
         container.innerHTML = `<label>Pozicijos nuo kraštų (V ir A):</label><input type="text" id="pozAB" value="" placeholder="pvz. 100, 620" oninput="draw()">`;
+    } else if (mode === 'centruotai') {
+        container.innerHTML = `
+            <div class="row" style="margin-top: 4px;">
+                <div style="flex:1;">
+                    <label>Kraštinis atstumas (mm):</label>
+                    <input type="number" id="pozEdge" value="100" min="70" oninput="draw()">
+                </div>
+                <div style="flex:1;">
+                    <label>Lankstų kiekis (vnt.):</label>
+                    <input type="number" id="pozCount" value="4" min="2" max="10" oninput="draw()">
+                </div>
+            </div>
+        `;
     }
     draw();
 }
@@ -953,7 +967,7 @@ function createDrawing(label, doorKey, w, h, scale, side, hinges, currentQty, qt
 
             const txt = document.createElement('div');
             txt.className = 'dim-text';
-            txt.innerText = val;
+            txt.innerText = Math.round(val);
             txt.style.top = (type === 'V' ? topPx/2 - 7 : topPx + (h*scale-topPx)/2 - 7) + 'px';
             if (side === 'kaire') txt.style.left = `-${offset + 28}px`; else txt.style.right = `-${offset + 28}px`;
             box.appendChild(txt);
@@ -1186,13 +1200,13 @@ function getMillingInstructionsHtml(hinges, hMain, hMirror, mainSide, qtyMain, q
         if (side === 'kaire') {
             let sorted = [...absFromTop].sort((a, b) => a - b);
             sorted.forEach((pos, idx) => {
-                list.push(`<b>L${idx + 1}:</b> ${pos} mm`);
+                list.push(`<b>L${idx + 1}:</b> ${Math.round(pos)} mm`);
             });
         } else {
             let absFromBottom = absFromTop.map(pos => totalH - pos);
             let sorted = absFromBottom.sort((a, b) => a - b);
             sorted.forEach((pos, idx) => {
-                list.push(`<b>L${idx + 1}:</b> ${pos} mm`);
+                list.push(`<b>L${idx + 1}:</b> ${Math.round(pos)} mm`);
             });
         }
 
@@ -1408,55 +1422,85 @@ function gatherCurrentConfigData() {
 
     if (!isZ24 && !isZ23Hidden) {
         const mode = document.querySelector('input[name="mode"]:checked').value;
-        let rawInput = "";
-        if (mode === 'virsus') {
-            rawInput = document.getElementById('pozV')?.value || "";
-        } else if (mode === 'apacia') {
-            rawInput = document.getElementById('pozA')?.value || "";
+        
+        if (mode === 'centruotai') {
+            const edgeVal = parseFloat(document.getElementById('pozEdge')?.value) || 100;
+            const countVal = parseInt(document.getElementById('pozCount')?.value) || 4;
+
+            if (edgeVal < 70) {
+                validationWarning = `Dėmesio: Kraštinis atstumas (${edgeVal} mm) yra mažesnis nei 70 mm!`;
+            }
+            if (h > 0 && (edgeVal * 2) >= h) {
+                validationWarning = `Dėmesio: Kraštiniai atstumai viršija arba lygūs rėmo aukščiui!`;
+            }
+
+            if (h > 0 && countVal >= 2 && !validationWarning) {
+                if (countVal === 2) {
+                    hinges.push({val: edgeVal, type: 'V'});
+                    hinges.push({val: edgeVal, type: 'A'});
+                } else {
+                    // Pirmas ir paskutinis lankstai per kraštinį atstumą, likę išdalinti tolygiai
+                    hinges.push({val: edgeVal, type: 'V'}); // 1 lankstas nuo viršaus
+                    hinges.push({val: edgeVal, type: 'A'}); // 1 lankstas nuo apačios
+
+                    let availableSpan = h - (2 * edgeVal);
+                    let steps = countVal - 1;
+                    let stepSize = availableSpan / steps;
+
+                    for (let i = 1; i <= countVal - 2; i++) {
+                        let posFromTop = edgeVal + (i * stepSize);
+                        hinges.push({val: posFromTop, type: 'V'});
+                    }
+                }
+            }
         } else {
-            rawInput = document.getElementById('pozAB')?.value || "";
-        }
-
-        let parsedValues = [];
-        rawInput.split(',').forEach(s => {
-            let valNum = parseFloat(s.trim());
-            if (!isNaN(valNum) && valNum > 0) {
-                parsedValues.push(valNum);
-            }
-        });
-
-        // Automatinis rūšiavimas (nuo mažiausios iki didžiausios reikšmės)
-        parsedValues.sort((a, b) => a - b);
-
-        // Validacijos patikros
-        parsedValues.forEach(val => {
-            if (h > 0) {
-                // Patikrinimas dėl atstumo nuo kraštų (min 70mm nuo viršaus arba apačios)
-                if (val < 70) {
-                    validationWarning = `Dėmesio: Lanksto pozicija (${val} mm) yra arčiau nei 70 mm nuo krašto!`;
-                }
-                if (val > (h - 70)) {
-                    validationWarning = `Dėmesio: Lanksto pozicija (${val} mm) viršuje yra arčiau nei 70 mm nuo krašto!`;
-                }
-                if (val > h) {
-                    validationWarning = `Dėmesio: Lanksto pozicija (${val} mm) viršija rėmo aukštį (${h} mm)!`;
-                }
-            }
-
-            if (mode === 'abu') {
-                hinges.push({val: val, type: 'V'});
-                hinges.push({val: val, type: 'A'});
-            } else if (mode === 'virsus') {
-                hinges.push({val: val, type: 'V'});
+            let rawInput = "";
+            if (mode === 'virsus') {
+                rawInput = document.getElementById('pozV')?.value || "";
+            } else if (mode === 'apacia') {
+                rawInput = document.getElementById('pozA')?.value || "";
             } else {
-                hinges.push({val: val, type: 'A'});
+                rawInput = document.getElementById('pozAB')?.value || "";
             }
-        });
 
-        // Patikrinimas dėl minimalaus tarpo tarp lankstų (min 70mm)
-        for (let i = 1; i < parsedValues.length; i++) {
-            if (parsedValues[i] - parsedValues[i - 1] < 70) {
-                validationWarning = `Dėmesio: Tarpas tarp lankstų (${parsedValues[i - 1]} mm ir ${parsedValues[i]} mm) yra mažesnis nei 70 mm!`;
+            let parsedValues = [];
+            rawInput.split(',').forEach(s => {
+                let valNum = parseFloat(s.trim());
+                if (!isNaN(valNum) && valNum > 0) {
+                    parsedValues.push(valNum);
+                }
+            });
+
+            // Automatinis rūšiavimas
+            parsedValues.sort((a, b) => a - b);
+
+            parsedValues.forEach(val => {
+                if (h > 0) {
+                    if (val < 70) {
+                        validationWarning = `Dėmesio: Lanksto pozicija (${val} mm) yra arčiau nei 70 mm nuo krašto!`;
+                    }
+                    if (val > (h - 70)) {
+                        validationWarning = `Dėmesio: Lanksto pozicija (${val} mm) viršuje yra arčiau nei 70 mm nuo krašto!`;
+                    }
+                    if (val > h) {
+                        validationWarning = `Dėmesio: Lanksto pozicija (${val} mm) viršija rėmo aukštį (${h} mm)!`;
+                    }
+                }
+
+                if (mode === 'abu') {
+                    hinges.push({val: val, type: 'V'});
+                    hinges.push({val: val, type: 'A'});
+                } else if (mode === 'virsus') {
+                    hinges.push({val: val, type: 'V'});
+                } else {
+                    hinges.push({val: val, type: 'A'});
+                }
+            });
+
+            for (let i = 1; i < parsedValues.length; i++) {
+                if (parsedValues[i] - parsedValues[i - 1] < 70) {
+                    validationWarning = `Dėmesio: Tarpas tarp lankstų (${parsedValues[i - 1]} mm ir ${parsedValues[i]} mm) yra mažesnis nei 70 mm!`;
+                }
             }
         }
     }
@@ -2015,10 +2059,10 @@ function resetCalculator() {
     updateHingeOptions();
     checkPleveleVisibility();
 
-    const modeAbux = document.querySelector('input[name="mode"][value="abu"]');
-    if (modeAbux) {
-        modeAbux.checked = true;
-        updateInputs(); // Išvalo laukelį (reikšmė tampa tuščia)
+    const modeCentruotai = document.querySelector('input[name="mode"][value="centruotai"]');
+    if (modeCentruotai) {
+        modeCentruotai.checked = true;
+        updateInputs(); 
     }
 
     draw();

@@ -33,22 +33,29 @@
             flex-shrink: 0; 
         }
         .preview-area { 
-            flex: 1; 
-            background: #dfe6e9; 
-            padding: 20px; 
-            border-radius: 12px; 
-            display: flex; 
-            gap: 25px; 
-            align-items: flex-start; 
-            justify-content: center; 
-            overflow: auto; 
-            box-sizing: border-box;
-        }
+        flex: 1; 
+        background: #dfe6e9; 
+        padding: 20px; 
+        border-radius: 12px; 
+        display: flex; 
+        flex-wrap: wrap; /* Svarbu: leidžia antram rėmeliui nusileisti žemyn, jei netelpa */
+        gap: 25px; 
+        align-items: center; 
+        justify-content: center; 
+        overflow: auto; 
+        box-sizing: border-box;
+    }
 
         @media (max-width: 850px) {
             .calc-layout { flex-direction: column; height: auto; overflow-y: auto; }
             .controls, .preview-area { width: 100%; max-height: none; }
+            .preview-area {
+            flex-direction: column;
+            align-items: center;
+            overflow-x: auto;
+            padding: 10px;
         }
+    }
         
         .checkbox-wrapper { display: flex; align-items: center; cursor: pointer; user-select: none; margin: 8px 0; width: fit-content; }
         .checkbox-wrapper input { width: 16px; height: 16px; margin: 0 6px 0 0; cursor: pointer; }

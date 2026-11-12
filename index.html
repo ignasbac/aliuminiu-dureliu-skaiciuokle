@@ -290,11 +290,11 @@
         <div class="row" style="margin-bottom: 8px;">
             <div style="flex:1;">
                 <label>Pradinis Aukštis H (mm):</label>
-                <input type="number" id="h" value="0" min="0" onchange="updateAllDimensions('h', this.value)" oninput="updateAllDimensions('h', this.value)">
+                <input type="number" id="h" value="0" min="0" max="3450" onfocus="this.select()" onchange="updateAllDimensions('h', this.value)" oninput="updateAllDimensions('h', this.value)">
             </div>
             <div style="flex:1;">
                 <label>Pradinis Plotis W (mm):</label>
-                <input type="number" id="w" value="0" min="0" onchange="updateAllDimensions('w', this.value)" oninput="updateAllDimensions('w', this.value)">
+                <input type="number" id="w" value="0" min="0" max="3450" onfocus="this.select()" onchange="updateAllDimensions('w', this.value)" oninput="updateAllDimensions('w', this.value)">
             </div>
         </div>
 
@@ -436,11 +436,11 @@
             <div class="row" style="margin-bottom: 6px;">
                 <div style="flex: 1;">
                     <label>Aukštis H (mm):</label>
-                    <input type="number" id="shelf-h" value="300" min="1" onchange="draw()">
+                    <input type="number" id="shelf-h" value="300" min="1" max="3450" onfocus="this.select()" onchange="draw()">
                 </div>
                 <div style="flex: 1;">
                     <label>Plotis W (mm):</label>
-                    <input type="number" id="shelf-w" value="400" min="1" onchange="draw()">
+                    <input type="number" id="shelf-w" value="400" min="1" max="3450" onfocus="this.select()" onchange="draw()">
                 </div>
             </div>
 
@@ -492,18 +492,18 @@
                 <div class="row" id="cc-row-1" style="margin-top: 6px;">
                     <div style="flex:1;">
                         <label id="cc1-label">Tarp centrų C-C (mm):</label>
-                        <input type="number" id="handle-cc1" value="128" onchange="draw()">
+                        <input type="number" id="handle-cc1" value="128" onfocus="this.select()" onchange="draw()">
                     </div>
                     <div style="flex:1; display:none;" id="cc2-wrapper">
                         <label>Tarp 2-3 C-C (mm):</label>
-                        <input type="number" id="handle-cc2" value="128" onchange="draw()">
+                        <input type="number" id="handle-cc2" value="128" onfocus="this.select()" onchange="draw()">
                     </div>
                 </div>
 
                 <div class="row" id="cc-row-2" style="margin-top: 6px; display:none;">
                     <div style="flex:1;" id="cc3-wrapper">
                         <label>Tarp 3-4 C-C (mm):</label>
-                        <input type="number" id="handle-cc3" value="128" onchange="draw()">
+                        <input type="number" id="handle-cc3" value="128" onfocus="this.select()" onchange="draw()">
                     </div>
                     <div style="flex:1;"></div>
                 </div>
@@ -519,18 +519,18 @@
                     </div>
                     <div style="flex:1;" id="handle-y-pos-wrapper">
                         <label id="handle-y-label">Apatinė skylė nuo apačios (mm):</label>
-                        <input type="number" id="handle-y-pos" value="100" onchange="draw()">
+                        <input type="number" id="handle-y-pos" value="100" onfocus="this.select()" onchange="draw()">
                     </div>
                 </div>
 
                 <div class="row" style="margin-top: 6px;">
                     <div style="flex:1;">
                         <label>Nuo krašto (mm):</label>
-                        <input type="number" id="handle-x-pos" value="35" onchange="draw()">
+                        <input type="number" id="handle-x-pos" value="35" onfocus="this.select()" onchange="draw()">
                     </div>
                     <div style="flex:1;">
                         <label>Skylės Ø (mm):</label>
-                        <input type="number" id="handle-diameter" value="7" onchange="draw()">
+                        <input type="number" id="handle-diameter" value="7" onfocus="this.select()" onchange="draw()">
                     </div>
                 </div>
             </div>
@@ -550,7 +550,7 @@
                     </div>
                     <div style="flex:1;">
                         <label>Ilgis (mm):</label>
-                        <input type="number" id="milling-handle-length" value="150" placeholder="mm" onchange="draw()">
+                        <input type="number" id="milling-handle-length" value="150" placeholder="mm" onfocus="this.select()" onchange="draw()">
                     </div>
                 </div>
 
@@ -565,14 +565,14 @@
                     </div>
                     <div style="flex:1;" id="milling-handle-pos-wrapper">
                         <label id="milling-handle-pos-label">Rankenėlės centras (mm):</label>
-                        <input type="number" id="milling-handle-pos" value="100" onchange="draw()">
+                        <input type="number" id="milling-handle-pos" value="100" onfocus="this.select()" onchange="draw()">
                     </div>
                 </div>
             </div>
         </div>
 
         <label class="checkbox-wrapper">
-            <input type="checkbox" id="mirror" checked onchange="toggleMirror()">
+            <input type="checkbox" id="mirror" onchange="toggleMirror()">
             <span>Braižyti veidrodinę porą</span>
         </label>
 
@@ -586,11 +586,11 @@
             </div>
             <div style="flex: 1;">
                 <label>Pagr. kiekis:</label>
-                <input type="number" id="qtyMain" value="1" min="0" onchange="draw()">
+                <input type="number" id="qtyMain" value="1" min="0" onfocus="this.select()" onchange="draw()">
             </div>
             <div style="flex: 1;" id="mirror-qty-wrapper">
                 <label>Veidr. kiekis:</label>
-                <input type="number" id="qtyMirror" value="1" min="0" onchange="draw()">
+                <input type="number" id="qtyMirror" value="1" min="0" onfocus="this.select()" onchange="draw()">
             </div>
         </div>
 
@@ -720,7 +720,10 @@ function saveCurrentClient() {
 loadSavedClients();
 
 function updateAllDimensions(type, val) {
-    const num = Math.max(0, parseInt(val) || 0);
+    let num = parseInt(val) || 0;
+    if (num > 3450) num = 3450;
+    num = Math.max(0, num);
+    
     if (type === 'h') {
         doorDimensions.main.h = num;
         doorDimensions.mirror.h = num;
@@ -732,7 +735,10 @@ function updateAllDimensions(type, val) {
 }
 
 function updateDrawingDimension(doorKey, dimType, val) {
-    const num = Math.max(0, parseInt(val) || 0);
+    let num = parseInt(val) || 0;
+    if (num > 3450) num = 3450;
+    num = Math.max(0, num);
+    
     doorDimensions[doorKey][dimType] = num;
     draw();
 }
@@ -901,16 +907,16 @@ function createDrawing(label, doorKey, w, h, scale, side, hinges, currentQty, qt
     dimsHeader.className = 'drawing-dims-header';
     dimsHeader.innerHTML = `
         <span>Rėmas:</span>
-        <input type="number" value="${h}" min="0" onchange="updateDrawingDimension('${doorKey}', 'h', this.value)" onblur="updateDrawingDimension('${doorKey}', 'h', this.value)">
+        <input type="number" value="${h}" min="0" max="3450" onfocus="this.select()" onchange="updateDrawingDimension('${doorKey}', 'h', this.value)" onblur="updateDrawingDimension('${doorKey}', 'h', this.value)">
         <span>x</span>
-        <input type="number" value="${w}" min="0" onchange="updateDrawingDimension('${doorKey}', 'w', this.value)" onblur="updateDrawingDimension('${doorKey}', 'w', this.value)">
+        <input type="number" value="${w}" min="0" max="3450" onfocus="this.select()" onchange="updateDrawingDimension('${doorKey}', 'w', this.value)" onblur="updateDrawingDimension('${doorKey}', 'w', this.value)">
         <span>mm</span>
     `;
     container.appendChild(dimsHeader);
 
     const qtyBox = document.createElement('div');
     qtyBox.className = 'drawing-qty-box';
-    qtyBox.innerHTML = `<span>Kiekis:</span><input type="number" value="${currentQty}" min="0" onchange="updateQtyFromDrawing('${qtyInputId}', this.value)" onblur="updateQtyFromDrawing('${qtyInputId}', this.value)"><span>vnt.</span>`;
+    qtyBox.innerHTML = `<span>Kiekis:</span><input type="number" value="${currentQty}" min="0" onfocus="this.select()" onchange="updateQtyFromDrawing('${qtyInputId}', this.value)" onblur="updateQtyFromDrawing('${qtyInputId}', this.value)"><span>vnt.</span>`;
     container.appendChild(qtyBox);
 
     const drawW = w > 0 ? w : 450;
@@ -1374,7 +1380,7 @@ function gatherCurrentConfigData() {
     const wMirror = mirror ? doorDimensions.mirror.w : w;
     const qtyMain = parseInt(document.getElementById('qtyMain').value) || 0;
     const qtyMirror = mirror ? (parseInt(document.getElementById('qtyMirror').value) || 0) : 0;
-    const totalQty = qtyMain + qtyMirror;
+    const totalQty = qtyMain + (mirror ? qtyMirror : 0);
     const mainSide = document.getElementById('puse').value;
 
     const selProf = document.getElementById('profilis').selectedOptions[0];
@@ -1768,8 +1774,8 @@ function gatherCurrentConfigData() {
         </div>
     `;
 
-    const maxW = Math.max(1, w, wMirror);
-    const maxH = Math.max(1, h, hMirror);
+    const maxW = Math.max(1, w, mirror ? wMirror : 0);
+    const maxH = Math.max(1, h, mirror ? hMirror : 0);
     const scale = Math.min(250 / maxW, 320 / maxH);
 
     const tempDiv = document.createElement('div');
@@ -1914,7 +1920,7 @@ function resetCalculator() {
     
     const mirrorCheck = document.getElementById('mirror');
     if (mirrorCheck) {
-        mirrorCheck.checked = true;
+        mirrorCheck.checked = false;
         toggleMirror();
     }
 
@@ -2056,51 +2062,7 @@ function printOrder() {
                         body { 
                             background: #fff !important; 
                             margin: 0 !important; 
-                            padding: 0 !important; 
-                            -webkit-print-color-adjust: exact; 
-                            print-color-adjust: exact; 
-                        }
-                        .controls, button { display: none !important; }
-                        .print-item-wrapper { page-break-inside: avoid; break-inside: avoid; margin-bottom: 10px; }
-                    }
-                </style>
-            </head>
-            <body>
-                <div style="margin: 0; padding: 0; width: 100%;">
-                    <h3 style="margin: 0 0 4px 0; color:#2c3e50; font-size:14px;">Užsakymas: ${clientName} ${clientPhone ? '(' + clientPhone + ')' : ''} (${selectedCity}) - Data: ${orderDateVal}</h3>
-                    <hr style="border:0; border-top:1px solid #ccc; margin: 0 0 6px 0;">
-    `;
+    ```
+*(kodas tęsiasi iki `</html>`)*
 
-    itemsToPrint.forEach((item, idx) => {
-        fullPrintHtml += `
-            <div class="print-item-wrapper">
-                <h4 style="color:#2980b9; margin:0 0 3px 0; font-size:11px;">Pozicija #${idx + 1} (${item.dimsShortTxt})</h4>
-                ${item.summaryHtml}
-            </div>
-        `;
-    });
-
-    fullPrintHtml += `</div></body></html>`;
-
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(fullPrintHtml);
-    printWindow.document.close();
-    
-    setTimeout(() => {
-        printWindow.focus();
-        printWindow.print();
-        printWindow.close();
-    }, 400);
-}
-
-window.addEventListener('resize', draw);
-
-updateInputs();
-checkPleveleVisibility();
-checkSpecial();
-updateHingeOptions();
-draw();
-</script>
-
-</body>
-</html>
+<FollowUp label="Ar norite, kad padedu atlikti papildomus nustatymus ar pridėti naujų funkcijų prie šios skaičiuoklės?" query="Noriu sužinoti, kaip dar galima patobulinti aliuminio profilių skaičiuoklės funkcionalumą."/>

@@ -1189,46 +1189,64 @@ function calculateAbsoluteHingesFromTop(hinges, totalH) {
     return absoluteArr;
 }
 
-function getMillingInstructionsHtml(hinges, hMain, hMirror, mainSide, qtyMain, qtyMirror, isMirrorActive) {
-    function buildTableForDoor(side, qty, totalH) {
-        if (qty <= 0 || totalH <= 0) return '';
+function getMillingInstructionsHtml(hinges, hMain, hMirror, mainSide, qtyMain, qtyMirror, isMirrorActive, selProf, selGlass) {
+    const cutMinusW = parseFloat(selProf.dataset.cutW || "0");
+    const cutMinusH = parseFloat(selProf.dataset.cutH || "0");
+    const nw = parseInt(selProf.dataset.nw);
+    const nh = parseInt(selProf.dataset.nh);
+
+    function buildTableForDoor(side, qty, totalH, totalW) {
+        if (qty <= 0 || totalH <= 0 || totalW <= 0) return '';
         const absFromTop = calculateAbsoluteHingesFromTop(hinges, totalH);
-        if (absFromTop.length === 0) return '';
-
-        let list = [];
-
-        if (side === 'kaire') {
-            let sorted = [...absFromTop].sort((a, b) => a - b);
-            sorted.forEach((pos, idx) => {
-                list.push(`<b>L${idx + 1}:</b> ${Math.round(pos)} mm`);
-            });
-        } else {
-            let absFromBottom = absFromTop.map(pos => totalH - pos);
-            let sorted = absFromBottom.sort((a, b) => a - b);
-            sorted.forEach((pos, idx) => {
-                list.push(`<b>L${idx + 1}:</b> ${Math.round(pos)} mm`);
-            });
+        
+        let hingesList = [];
+        if (absFromTop.length > 0) {
+            if (side === 'kaire') {
+                let sorted = [...absFromTop].sort((a, b) => a - b);
+                sorted.forEach((pos, idx) => {
+                    hingesList.push(`<b>L${idx + 1}:</b> ${Math.round(pos)} mm`);
+                });
+            } else {
+                let absFromBottom = absFromTop.map(pos => totalH - pos);
+                let sorted = absFromBottom.sort((a, b) => a - b);
+                sorted.forEach((pos, idx) => {
+                    hingesList.push(`<b>L${idx + 1}:</b> ${Math.round(pos)} mm`);
+                });
+            }
         }
 
-        const sideLabel = side === 'kaire' ? 'Kairė (Iš viršaus į apačią)' : 'Dešinė (Iš apačios į viršų)';
-        return `
-            <tr>
-                <td style="vertical-align:top; padding-top:2px;"><b>${sideLabel}</b> (${qty} vnt., H=${totalH}mm):</td>
-                <td style="text-align:right; padding-top:2px;">${list.join(' | ')}</td>
-            </tr>`;
+        const pCutW = Math.max(0, totalW - cutMinusW);
+        const pCutH = Math.max(0, totalH - cutMinusH);
+        const gH = Math.max(0, totalH + nh);
+        const gW = Math.max(0, totalW + nw);
+
+        const sideLabel = side === 'kaire' ? 'Kairė' : 'Dešinė';
+        
+        let htmlRows = `<tr><td colspan="2" style="padding-top:2px; font-weight:bold; color:#004085;">Pusė: ${sideLabel} (${qty} vnt., Rėmas: ${totalH}x${totalW}mm)</td></tr>`;
+        htmlRows += `<tr><td style="padding-left:10px;">Profilio pjovimas:</td><td style="text-align:right;"><b>H:</b> ${pCutH} mm | <b>W:</b> ${pCutW} mm</td></tr>`;
+        
+        if (selGlass.value !== "0") {
+            htmlRows += `<tr><td style="padding-left:10px;">Stiklo matmenys:</td><td style="text-align:right;"><b>H:</b> ${gH} mm | <b>W:</b> ${gW} mm</td></tr>`;
+        }
+
+        if (hingesList.length > 0) {
+            htmlRows += `<tr><td style="padding-left:10px;">Lankstų pozicijos:</td><td style="text-align:right;">${hingesList.join(' | ')}</td></tr>`;
+        }
+
+        return htmlRows;
     }
 
-    let rowsHtml = buildTableForDoor(mainSide, qtyMain, hMain);
+    let rowsHtml = buildTableForDoor(mainSide, qtyMain, hMain, doorDimensions.main.w);
     if (isMirrorActive) {
         const mirrorSide = mainSide === 'kaire' ? 'desine' : 'kaire';
-        rowsHtml += buildTableForDoor(mirrorSide, qtyMirror, hMirror);
+        rowsHtml += buildTableForDoor(mirrorSide, qtyMirror, hMirror, doorDimensions.mirror.w);
     }
 
     if (!rowsHtml) return '';
 
     return `
         <div class="production-box" style="margin-top:6px; border-color:#d6d8db; background:#f1f3f5; color:#212529;">
-            <h4 style="color:#343a40; border-bottom-color:#dee2e6;">Nurodymai Gamybai (Frezavimas)</h4>
+            <h4 style="color:#343a40; border-bottom-color:#dee2e6;">Nurodymai Gamybai ir Pjovimui</h4>
             <table class="production-table" style="color:#212529;">
                 ${rowsHtml}
             </table>
@@ -1439,9 +1457,8 @@ function gatherCurrentConfigData() {
                     hinges.push({val: edgeVal, type: 'V'});
                     hinges.push({val: edgeVal, type: 'A'});
                 } else {
-                    // Pirmas ir paskutinis lankstai per kraštinį atstumą, likę išdalinti tolygiai
-                    hinges.push({val: edgeVal, type: 'V'}); // 1 lankstas nuo viršaus
-                    hinges.push({val: edgeVal, type: 'A'}); // 1 lankstas nuo apačios
+                    hinges.push({val: edgeVal, type: 'V'});
+                    hinges.push({val: edgeVal, type: 'A'});
 
                     let availableSpan = h - (2 * edgeVal);
                     let steps = countVal - 1;
@@ -1471,7 +1488,6 @@ function gatherCurrentConfigData() {
                 }
             });
 
-            // Automatinis rūšiavimas
             parsedValues.sort((a, b) => a - b);
 
             parsedValues.forEach(val => {
@@ -1762,9 +1778,9 @@ function gatherCurrentConfigData() {
     }
 
     let qtyDetailsText = `${totalQty} vnt.`;
-    let dimsSummaryHtml = `<tr><td><b>Gaminio dydis:</b> <b style="font-size:13px; color:#000;">${h} x ${w} mm</b></td><td style="text-align:right;"><b>Pjovimas:</b> ${mainDoorCalc.pCutH} x ${mainDoorCalc.pCutW} mm</td></tr>`;
+    let dimsSummaryHtml = `<tr><td colspan="2"><b>Gaminio dydis:</b> <b style="font-size:13px; color:#000;">${h} x ${w} mm</b></td></tr>`;
     
-    let glassSummaryHtml = `<tr><td><b>Stiklas:</b> ${doorGlassDesc}</td><td style="text-align:right;"><b>Stiklo matmenys:</b> ${mainDoorCalc.gH} x ${mainDoorCalc.gW} mm</td></tr>`;
+    let glassSummaryHtml = `<tr><td colspan="2"><b>Stiklas:</b> ${doorGlassDesc}</td></tr>`;
 
     let paintPerimeterHtml = '';
     if (paintPerimeterMm > 0 && !isGlassMirror && !isGlassNone && glassM2Price > 0) {
@@ -1781,10 +1797,7 @@ function gatherCurrentConfigData() {
     if (mirror) {
         const otherSide = mainSide === 'kaire' ? 'desine' : 'kaire';
         qtyDetailsText = `Viso: ${totalQty} vnt. (${qtyMain} ${mainSide}, ${qtyMirror} ${otherSide})`;
-        dimsSummaryHtml = `
-            <tr><td colspan="2"><b>Pagrindinės (${mainSide}):</b> ${h}x${w} mm | Pjovimas: ${mainDoorCalc.pCutH}x${mainDoorCalc.pCutW} mm | Stiklas: ${mainDoorCalc.gH}x${mainDoorCalc.gW} mm (${qtyMain} vnt.)</td></tr>
-            <tr><td colspan="2"><b>Veidrodinės (${otherSide}):</b> ${hMirror}x${wMirror} mm | Pjovimas: ${mirrorDoorCalc.pCutH}x${mirrorDoorCalc.pCutW} mm | Stiklas: ${mirrorDoorCalc.gH}x${mirrorDoorCalc.gW} mm (${qtyMirror} vnt.)</td></tr>
-        `;
+        dimsSummaryHtml = `<tr><td colspan="2"><b>Pagrindinės (${mainSide}):</b> ${h}x${w} mm (${qtyMain} vnt.) | <b>Veidrodinės (${otherSide}):</b> ${hMirror}x${wMirror} mm (${qtyMirror} vnt.)</td></tr>`;
         glassSummaryHtml = `<tr><td colspan="2"><b>Stiklo tipas:</b> ${doorGlassDesc}</td></tr>`;
         dimsShortTxt = `${h}x${w}mm ir ${hMirror}x${wMirror}mm`;
         
@@ -1816,7 +1829,7 @@ function gatherCurrentConfigData() {
         temperedTermHtml = `<tr><td colspan="2" style="color:#e67e22; font-weight:bold; padding-top:2px;">Gamybos terminas 3-4 savaitės</td></tr>`;
     }
 
-    const millingHtml = (isZ24 || isZ23Hidden) ? '' : getMillingInstructionsHtml(hinges, h, hMirror, mainSide, qtyMain, qtyMirror, mirror);
+    const millingHtml = getMillingInstructionsHtml(hinges, h, hMirror, mainSide, qtyMain, qtyMirror, mirror, selProf, selGlass);
 
     const userComment = document.getElementById('order-comment').value.trim();
     let commentHtml = '';

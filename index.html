@@ -883,11 +883,11 @@ function updateInputs() {
     const container = document.getElementById('inputs-container');
     container.innerHTML = '';
     if (mode === 'virsus') {
-        container.innerHTML = `<label>Pozicijos nuo viršaus:</label><input type="text" id="pozV" value="100, 620" onchange="draw()">`;
+        container.innerHTML = `<label>Pozicijos nuo viršaus:</label><input type="text" id="pozV" value="100, 620" oninput="draw()">`;
     } else if (mode === 'apacia') {
-        container.innerHTML = `<label>Pozicijos nuo apačios:</label><input type="text" id="pozA" value="100, 620" onchange="draw()">`;
+        container.innerHTML = `<label>Pozicijos nuo apačios:</label><input type="text" id="pozA" value="100, 620" oninput="draw()">`;
     } else {
-        container.innerHTML = `<label>Atstumas nuo kraštų (V ir A):</label><input type="number" id="pozAB" value="100" onfocus="this.select()" onchange="draw()" oninput="draw()">`;
+        container.innerHTML = `<label>Pozicijos nuo kraštų (V ir A, pvz., 100, 620):</label><input type="text" id="pozAB" value="100, 620" oninput="draw()">`;
     }
     draw();
 }
@@ -1413,11 +1413,14 @@ function gatherCurrentConfigData() {
             const a = document.getElementById('pozA')?.value || "";
             a.split(',').forEach(s => { if(s.trim()) hinges.push({val: parseFloat(s.trim()), type: 'A'}) });
         } else {
-            const valAB = parseFloat(document.getElementById('pozAB')?.value) || 0;
-            if (valAB > 0) {
-                hinges.push({val: valAB, type: 'V'});
-                hinges.push({val: valAB, type: 'A'});
-            }
+            const abInput = document.getElementById('pozAB')?.value || "";
+            abInput.split(',').forEach(s => {
+                let valNum = parseFloat(s.trim());
+                if(!isNaN(valNum) && valNum > 0) {
+                    hinges.push({val: valNum, type: 'V'});
+                    hinges.push({val: valNum, type: 'A'});
+                }
+            });
         }
     }
 

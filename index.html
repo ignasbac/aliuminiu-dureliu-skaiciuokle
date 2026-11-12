@@ -11,8 +11,8 @@
             margin: 0; 
             min-height: 100vh; 
             box-sizing: border-box; 
-            display: flex;
-            flex-direction: column;
+            display: flex; 
+            flex-direction: column; 
         }
 
         .calc-layout {
@@ -33,39 +33,35 @@
             flex-shrink: 0; 
         }
         .preview-area { 
-        flex: 1; 
-        background: #dfe6e9; 
-        padding: 20px; 
-        border-radius: 12px; 
-        display: flex; 
-        flex-wrap: wrap; /* Svarbu: leidžia antram rėmeliui nusileisti žemyn, jei netelpa */
-        gap: 25px; 
-        align-items: center; 
-        justify-content: center; 
-        overflow: auto; 
-        box-sizing: border-box;
-    }
+            flex: 1; 
+            background: #dfe6e9; 
+            padding: 20px; 
+            border-radius: 12px; 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 25px; 
+            align-items: flex-start; 
+            justify-content: center; 
+            overflow: auto; 
+            box-sizing: border-box;
+        }
 
         @media (max-width: 850px) {
             .calc-layout { flex-direction: column; height: auto; overflow-y: auto; }
-            .controls, .preview-area { width: 100%; max-height: none; }
+            .controls, .preview-area { width: 100%; max-height: none; box-sizing: border-box; }
             .preview-area {
+                padding: 15px 10px;
+                overflow-x: auto;
+            }
+            .preview-drawings-wrapper {
                 flex-direction: column !important;
                 align-items: center !important;
-                padding: 10px;
-                display: flex !important;
+                width: 100% !important;
+                gap: 30px !important;
             }
-
             .drawing-container {
                 width: 100% !important;
-                max-width: 100% !important;
-                box-sizing: border-box;
-                margin-bottom: 20px;
-            }
-
-            .drawing-box {
-                max-width: 100% !important;
-                box-sizing: border-box;
+                align-items: center !important;
             }
         }
         
@@ -294,11 +290,11 @@
         <div class="row" style="margin-bottom: 8px;">
             <div style="flex:1;">
                 <label>Pradinis Aukštis H (mm):</label>
-                <input type="number" id="h" value="720" onchange="updateAllDimensions('h', this.value)">
+                <input type="number" id="h" value="0" min="0" onchange="updateAllDimensions('h', this.value)" oninput="updateAllDimensions('h', this.value)">
             </div>
             <div style="flex:1;">
                 <label>Pradinis Plotis W (mm):</label>
-                <input type="number" id="w" value="450" onchange="updateAllDimensions('w', this.value)">
+                <input type="number" id="w" value="0" min="0" onchange="updateAllDimensions('w', this.value)" oninput="updateAllDimensions('w', this.value)">
             </div>
         </div>
 
@@ -484,7 +480,7 @@
                 <div class="row">
                     <div style="flex:1;">
                         <label>Skylių skaičius:</label>
-                        <select id="handle-holes-count" onchange="draw()">
+                        <select id="handle-holes-count" onchange="updateHandleCCInputs(); draw();">
                             <option value="1">1 skylė (rankenėlei-mygtukui)</option>
                             <option value="2" selected>2 skylės</option>
                             <option value="3">3 skylės</option>
@@ -498,7 +494,7 @@
                         <label id="cc1-label">Tarp centrų C-C (mm):</label>
                         <input type="number" id="handle-cc1" value="128" onchange="draw()">
                     </div>
-                    <div style="flex:1;" id="cc2-wrapper">
+                    <div style="flex:1; display:none;" id="cc2-wrapper">
                         <label>Tarp 2-3 C-C (mm):</label>
                         <input type="number" id="handle-cc2" value="128" onchange="draw()">
                     </div>
@@ -625,7 +621,7 @@
             <div id="cart-items-list"></div>
         </div>
 
-        <button class="btn-order" onclick="saveCurrentClient(); sendToGoogleSheets(); printOrder();">UŽSAKYTI / SPAUSDINTI VISKĄ</button>
+        <button class="btn-order" onclick="saveCurrentClient(); sendToGoogleSheets(); printOrder(); setTimeout(resetCalculator, 1000);">UŽSAKYTI / SPAUSDINTI VISKĄ</button>
     </div>
 
     <div class="preview-area" id="preview-area"></div>
@@ -635,8 +631,8 @@
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0dkSvbPhPp8tIZ1gZuTTE9itNPM-pqNoS1kmVgsUIV0OFt-USut1qmF314WYfpVqApg/exec";
 
 let doorDimensions = {
-    main: { h: 720, w: 450 },
-    mirror: { h: 720, w: 450 }
+    main: { h: 0, w: 0 },
+    mirror: { h: 0, w: 0 }
 };
 
 let orderCart = [];
@@ -724,7 +720,7 @@ function saveCurrentClient() {
 loadSavedClients();
 
 function updateAllDimensions(type, val) {
-    const num = parseInt(val) || 1;
+    const num = Math.max(0, parseInt(val) || 0);
     if (type === 'h') {
         doorDimensions.main.h = num;
         doorDimensions.mirror.h = num;
@@ -736,9 +732,33 @@ function updateAllDimensions(type, val) {
 }
 
 function updateDrawingDimension(doorKey, dimType, val) {
-    const num = parseInt(val) || 1;
+    const num = Math.max(0, parseInt(val) || 0);
     doorDimensions[doorKey][dimType] = num;
     draw();
+}
+
+function updateHandleCCInputs() {
+    const count = parseInt(document.getElementById('handle-holes-count').value) || 1;
+    const ccRow1 = document.getElementById('cc-row-1');
+    const cc2Wrapper = document.getElementById('cc2-wrapper');
+    const ccRow2 = document.getElementById('cc-row-2');
+
+    if (count === 1) {
+        ccRow1.style.display = 'none';
+        ccRow2.style.display = 'none';
+    } else if (count === 2) {
+        ccRow1.style.display = 'flex';
+        cc2Wrapper.style.display = 'none';
+        ccRow2.style.display = 'none';
+    } else if (count === 3) {
+        ccRow1.style.display = 'flex';
+        cc2Wrapper.style.display = 'block';
+        ccRow2.style.display = 'none';
+    } else {
+        ccRow1.style.display = 'flex';
+        cc2Wrapper.style.display = 'block';
+        ccRow2.style.display = 'flex';
+    }
 }
 
 function toggleHandleSection() {
@@ -746,6 +766,7 @@ function toggleHandleSection() {
     document.getElementById('handle-details').style.display = hasHandle ? 'block' : 'none';
     if (hasHandle) {
         document.getElementById('handle-diameter').value = 7;
+        updateHandleCCInputs();
     }
     draw();
 }
@@ -880,9 +901,9 @@ function createDrawing(label, doorKey, w, h, scale, side, hinges, currentQty, qt
     dimsHeader.className = 'drawing-dims-header';
     dimsHeader.innerHTML = `
         <span>Rėmas:</span>
-        <input type="number" value="${h}" min="1" onchange="updateDrawingDimension('${doorKey}', 'h', this.value)" onblur="updateDrawingDimension('${doorKey}', 'h', this.value)">
+        <input type="number" value="${h}" min="0" onchange="updateDrawingDimension('${doorKey}', 'h', this.value)" onblur="updateDrawingDimension('${doorKey}', 'h', this.value)">
         <span>x</span>
-        <input type="number" value="${w}" min="1" onchange="updateDrawingDimension('${doorKey}', 'w', this.value)" onblur="updateDrawingDimension('${doorKey}', 'w', this.value)">
+        <input type="number" value="${w}" min="0" onchange="updateDrawingDimension('${doorKey}', 'w', this.value)" onblur="updateDrawingDimension('${doorKey}', 'w', this.value)">
         <span>mm</span>
     `;
     container.appendChild(dimsHeader);
@@ -892,234 +913,239 @@ function createDrawing(label, doorKey, w, h, scale, side, hinges, currentQty, qt
     qtyBox.innerHTML = `<span>Kiekis:</span><input type="number" value="${currentQty}" min="0" onchange="updateQtyFromDrawing('${qtyInputId}', this.value)" onblur="updateQtyFromDrawing('${qtyInputId}', this.value)"><span>vnt.</span>`;
     container.appendChild(qtyBox);
 
+    const drawW = w > 0 ? w : 450;
+    const drawH = h > 0 ? h : 720;
+
     const box = document.createElement('div');
     box.className = 'drawing-box';
-    box.style.width = (w * scale) + 'px';
-    box.style.height = (h * scale) + 'px';
+    box.style.width = (drawW * scale) + 'px';
+    box.style.height = (drawH * scale) + 'px';
 
-    hinges.forEach(hng => {
-        const val = hng.val;
-        const type = hng.type;
-        if (isNaN(val) || val <= 0) return;
-        let topPx = (type === 'V') ? (val * scale) : (h * scale - val * scale);
-        const mark = document.createElement('div');
-        mark.className = 'hinge-line';
-        mark.style.top = (topPx - 2) + 'px';
-        if (side === 'kaire') mark.style.left = '-12px'; else mark.style.right = '-12px';
-        box.appendChild(mark);
-
-        const dimLine = document.createElement('div');
-        dimLine.className = 'dim-line';
-        dimLine.style.height = (type === 'V' ? topPx : (h * scale - topPx)) + 'px';
-        dimLine.style.top = (type === 'V' ? 0 : topPx) + 'px';
-        const offset = type === 'V' ? 20 : 38;
-        if (side === 'kaire') dimLine.style.left = `-${offset}px`; else dimLine.style.right = `-${offset}px`;
-        box.appendChild(dimLine);
-
-        const txt = document.createElement('div');
-        txt.className = 'dim-text';
-        txt.innerText = val;
-        txt.style.top = (type === 'V' ? topPx/2 - 7 : topPx + (h*scale-topPx)/2 - 7) + 'px';
-        if (side === 'kaire') txt.style.left = `-${offset + 28}px`; else txt.style.right = `-${offset + 28}px`;
-        box.appendChild(txt);
-    });
-
-    if (handleInfo && handleInfo.active) {
-        let xPx = (side === 'kaire') ? ((w - handleInfo.xPos) * scale) : (handleInfo.xPos * scale);
-        let ccs = handleInfo.ccs;
-        let totalSpan = ccs.reduce((a, b) => a + b, 0);
-
-        let holeYPositions = [];
-        let bottomHoleY = 0;
-        let topHoleY = 0;
-
-        if (handleInfo.refY === 'apacia') {
-            bottomHoleY = h - handleInfo.yPos;
-            topHoleY = bottomHoleY - totalSpan;
-            let currY = topHoleY;
-            holeYPositions.push(currY);
-            ccs.forEach(cc => {
-                currY += cc;
-                holeYPositions.push(currY);
-            });
-        } else if (handleInfo.refY === 'virsus') {
-            topHoleY = handleInfo.yPos;
-            let currY = topHoleY;
-            holeYPositions.push(currY);
-            ccs.forEach(cc => {
-                currY += cc;
-                holeYPositions.push(currY);
-            });
-            bottomHoleY = currY;
-        } else {
-            topHoleY = (h - totalSpan) / 2;
-            let currY = topHoleY;
-            holeYPositions.push(currY);
-            ccs.forEach(cc => {
-                currY += cc;
-                holeYPositions.push(currY);
-            });
-            bottomHoleY = currY;
-        }
-
-        holeYPositions.forEach(yMm => {
-            if (yMm >= 0 && yMm <= h) {
-                const holeEl = document.createElement('div');
-                holeEl.className = 'handle-hole';
-                holeEl.style.left = xPx + 'px';
-                holeEl.style.top = (yMm * scale) + 'px';
-                box.appendChild(holeEl);
-            }
-        });
-
-        const refHoleY = (handleInfo.refY === 'apacia') ? bottomHoleY : topHoleY;
-        const handleLine = document.createElement('div');
-        handleLine.className = 'handle-dim-line';
-        handleLine.style.top = (refHoleY * scale) + 'px';
-        if (side === 'kaire') {
-            handleLine.style.left = xPx + 'px';
-            handleLine.style.width = ((w * scale) - xPx) + 'px';
-        } else {
-            handleLine.style.left = '0px';
-            handleLine.style.width = xPx + 'px';
-        }
-        box.appendChild(handleLine);
-
-        const handleTxt = document.createElement('div');
-        handleTxt.className = 'handle-dim-text';
-        handleTxt.innerText = `${handleInfo.xPos}mm (${handleInfo.count}x Ø${handleInfo.diameter}mm)`;
-        handleTxt.style.top = (refHoleY * scale - 18) + 'px';
-        if (side === 'kaire') {
-            handleTxt.style.right = '6px';
-        } else {
-            handleTxt.style.left = '6px';
-        }
-        box.appendChild(handleTxt);
-
-        const vDimLine = document.createElement('div');
-        vDimLine.className = 'handle-v-line';
-        let vLineTop = 0;
-        let vLineHeight = 0;
-        let vLabelVal = 0;
-
-        if (handleInfo.refY === 'apacia') {
-            vLineTop = bottomHoleY * scale;
-            vLineHeight = (h * scale) - vLineTop;
-            vLabelVal = Math.round(handleInfo.yPos);
-        } else if (handleInfo.refY === 'virsus') {
-            vLineTop = 0;
-            vLineHeight = topHoleY * scale;
-            vLabelVal = Math.round(handleInfo.yPos);
-        } else {
-            vLineTop = bottomHoleY * scale;
-            vLineHeight = (h * scale) - vLineTop;
-            vLabelVal = Math.round(h - bottomHoleY);
-        }
-
-        const vLineOffset = 32;
-        vDimLine.style.top = vLineTop + 'px';
-        vDimLine.style.height = vLineHeight + 'px';
-        vDimLine.style.left = (xPx + (side === 'kaire' ? -vLineOffset : vLineOffset)) + 'px';
-        box.appendChild(vDimLine);
-
-        const vDimTxt = document.createElement('div');
-        vDimTxt.className = 'handle-dim-text';
-        vDimTxt.innerText = `${vLabelVal}mm (${handleInfo.refY === 'virsus' ? 'V' : (handleInfo.refY === 'centras' ? 'Viduryje' : 'A')})`;
-        vDimTxt.style.top = (vLineTop + vLineHeight / 2 - 8) + 'px';
-        vDimTxt.style.left = (xPx + (side === 'kaire' ? -(vLineOffset + 68) : (vLineOffset + 6))) + 'px';
-        box.appendChild(vDimTxt);
-
-        const ccOffset = 28; 
-        for (let i = 0; i < ccs.length; i++) {
-            let y1 = holeYPositions[i] * scale;
-            let y2 = holeYPositions[i + 1] * scale;
-            
-            const ccLine = document.createElement('div');
-            ccLine.className = 'handle-v-line';
-            ccLine.style.top = y1 + 'px';
-            ccLine.style.height = (y2 - y1) + 'px';
-            ccLine.style.left = (xPx + (side === 'kaire' ? ccOffset : -ccOffset)) + 'px';
-            box.appendChild(ccLine);
-
-            const ccTxt = document.createElement('div');
-            ccTxt.className = 'handle-dim-text';
-            ccTxt.innerText = `C-C: ${ccs[i]}mm`;
-            ccTxt.style.top = (y1 + (y2 - y1) / 2 - 8) + 'px';
-            ccTxt.style.left = (xPx + (side === 'kaire' ? (ccOffset + 6) : -(ccOffset + 60))) + 'px';
-            box.appendChild(ccTxt);
-        }
-    }
-
-    if (millingHandleInfo && millingHandleInfo.active) {
-        let yMm = 0;
-        if (millingHandleInfo.ref === 'virsus') {
-            yMm = millingHandleInfo.pos;
-        } else if (millingHandleInfo.ref === 'apacia') {
-            yMm = h - millingHandleInfo.pos;
-        } else { 
-            yMm = h / 2;
-        }
-
-        if (yMm >= 0 && yMm <= h) {
-            let topPx = yMm * scale;
-            
+    if (w > 0 && h > 0) {
+        hinges.forEach(hng => {
+            const val = hng.val;
+            const type = hng.type;
+            if (isNaN(val) || val <= 0) return;
+            let topPx = (type === 'V') ? (val * scale) : (h * scale - val * scale);
             const mark = document.createElement('div');
-            mark.className = 'milling-handle-line';
-            mark.style.top = topPx + 'px';
-            
-            if (side === 'kaire') {
-                mark.style.right = '-12px'; 
-            } else { 
-                mark.style.left = '-12px'; 
-            }
+            mark.className = 'hinge-line';
+            mark.style.top = (topPx - 2) + 'px';
+            if (side === 'kaire') mark.style.left = '-12px'; else mark.style.right = '-12px';
             box.appendChild(mark);
 
             const dimLine = document.createElement('div');
-            dimLine.className = 'handle-v-line';
-            
-            let vTop = 0;
-            let vHeight = 0;
-            let labelVal = Math.round(millingHandleInfo.pos);
-
-            if (millingHandleInfo.ref === 'virsus') {
-                vTop = 0;
-                vHeight = topPx;
-            } else if (millingHandleInfo.ref === 'apacia') {
-                vTop = topPx;
-                vHeight = (h * scale) - topPx;
-            } else { 
-                vTop = topPx;
-                vHeight = (h * scale) - topPx;
-                labelVal = Math.round(h / 2);
-            }
-
-            const mOffset = 30; 
-            dimLine.style.top = vTop + 'px';
-            dimLine.style.height = vHeight + 'px';
-            if (side === 'kaire') {
-                dimLine.style.right = `-${mOffset}px`;
-            } else {
-                dimLine.style.left = `-${mOffset}px`;
-            }
+            dimLine.className = 'dim-line';
+            dimLine.style.height = (type === 'V' ? topPx : (h * scale - topPx)) + 'px';
+            dimLine.style.top = (type === 'V' ? 0 : topPx) + 'px';
+            const offset = type === 'V' ? 20 : 38;
+            if (side === 'kaire') dimLine.style.left = `-${offset}px`; else dimLine.style.right = `-${offset}px`;
             box.appendChild(dimLine);
 
             const txt = document.createElement('div');
-            txt.className = 'handle-dim-text';
-            txt.style.transform = 'translateY(-100%)'; 
-            txt.style.marginBottom = '6px';
-
-            let refCodeText = millingHandleInfo.ref === 'virsus' ? 'V' : (millingHandleInfo.ref === 'centras' ? 'Viduryje' : 'Centras');
-            let lengthTxt = millingHandleInfo.length > 0 ? `, L=${millingHandleInfo.length}mm` : '';
-            txt.innerText = `${millingHandleInfo.model}${lengthTxt} (${labelVal}mm ${refCodeText})`;
-            txt.style.top = (topPx - 4) + 'px';
-            
-            const textGap = 10;
-            if (side === 'kaire') {
-                txt.style.left = `calc(100% + ${mOffset + textGap}px)`;
-            } else {
-                txt.style.right = `calc(100% + ${mOffset + textGap}px)`;
-            }
+            txt.className = 'dim-text';
+            txt.innerText = val;
+            txt.style.top = (type === 'V' ? topPx/2 - 7 : topPx + (h*scale-topPx)/2 - 7) + 'px';
+            if (side === 'kaire') txt.style.left = `-${offset + 28}px`; else txt.style.right = `-${offset + 28}px`;
             box.appendChild(txt);
+        });
+
+        if (handleInfo && handleInfo.active) {
+            let xPx = (side === 'kaire') ? ((w - handleInfo.xPos) * scale) : (handleInfo.xPos * scale);
+            let ccs = handleInfo.ccs;
+            let totalSpan = ccs.reduce((a, b) => a + b, 0);
+
+            let holeYPositions = [];
+            let bottomHoleY = 0;
+            let topHoleY = 0;
+
+            if (handleInfo.refY === 'apacia') {
+                bottomHoleY = h - handleInfo.yPos;
+                topHoleY = bottomHoleY - totalSpan;
+                let currY = topHoleY;
+                holeYPositions.push(currY);
+                ccs.forEach(cc => {
+                    currY += cc;
+                    holeYPositions.push(currY);
+                });
+            } else if (handleInfo.refY === 'virsus') {
+                topHoleY = handleInfo.yPos;
+                let currY = topHoleY;
+                holeYPositions.push(currY);
+                ccs.forEach(cc => {
+                    currY += cc;
+                    holeYPositions.push(currY);
+                });
+                bottomHoleY = currY;
+            } else {
+                topHoleY = (h - totalSpan) / 2;
+                let currY = topHoleY;
+                holeYPositions.push(currY);
+                ccs.forEach(cc => {
+                    currY += cc;
+                    holeYPositions.push(currY);
+                });
+                bottomHoleY = currY;
+            }
+
+            holeYPositions.forEach(yMm => {
+                if (yMm >= 0 && yMm <= h) {
+                    const holeEl = document.createElement('div');
+                    holeEl.className = 'handle-hole';
+                    holeEl.style.left = xPx + 'px';
+                    holeEl.style.top = (yMm * scale) + 'px';
+                    box.appendChild(holeEl);
+                }
+            });
+
+            const refHoleY = (handleInfo.refY === 'apacia') ? bottomHoleY : topHoleY;
+            const handleLine = document.createElement('div');
+            handleLine.className = 'handle-dim-line';
+            handleLine.style.top = (refHoleY * scale) + 'px';
+            if (side === 'kaire') {
+                handleLine.style.left = xPx + 'px';
+                handleLine.style.width = ((w * scale) - xPx) + 'px';
+            } else {
+                handleLine.style.left = '0px';
+                handleLine.style.width = xPx + 'px';
+            }
+            box.appendChild(handleLine);
+
+            const handleTxt = document.createElement('div');
+            handleTxt.className = 'handle-dim-text';
+            handleTxt.innerText = `${handleInfo.xPos}mm (${handleInfo.count}x Ø${handleInfo.diameter}mm)`;
+            handleTxt.style.top = (refHoleY * scale - 18) + 'px';
+            if (side === 'kaire') {
+                handleTxt.style.right = '6px';
+            } else {
+                handleTxt.style.left = '6px';
+            }
+            box.appendChild(handleTxt);
+
+            const vDimLine = document.createElement('div');
+            vDimLine.className = 'handle-v-line';
+            let vLineTop = 0;
+            let vLineHeight = 0;
+            let vLabelVal = 0;
+
+            if (handleInfo.refY === 'apacia') {
+                vLineTop = bottomHoleY * scale;
+                vLineHeight = (h * scale) - vLineTop;
+                vLabelVal = Math.round(handleInfo.yPos);
+            } else if (handleInfo.refY === 'virsus') {
+                vLineTop = 0;
+                vLineHeight = topHoleY * scale;
+                vLabelVal = Math.round(handleInfo.yPos);
+            } else {
+                vLineTop = bottomHoleY * scale;
+                vLineHeight = (h * scale) - vLineTop;
+                vLabelVal = Math.round(h - bottomHoleY);
+            }
+
+            const vLineOffset = 32;
+            vDimLine.style.top = vLineTop + 'px';
+            vDimLine.style.height = vLineHeight + 'px';
+            vDimLine.style.left = (xPx + (side === 'kaire' ? -vLineOffset : vLineOffset)) + 'px';
+            box.appendChild(vDimLine);
+
+            const vDimTxt = document.createElement('div');
+            vDimTxt.className = 'handle-dim-text';
+            vDimTxt.innerText = `${vLabelVal}mm (${handleInfo.refY === 'virsus' ? 'V' : (handleInfo.refY === 'centras' ? 'Viduryje' : 'A')})`;
+            vDimTxt.style.top = (vLineTop + vLineHeight / 2 - 8) + 'px';
+            vDimTxt.style.left = (xPx + (side === 'kaire' ? -(vLineOffset + 68) : (vLineOffset + 6))) + 'px';
+            box.appendChild(vDimTxt);
+
+            const ccOffset = 28; 
+            for (let i = 0; i < ccs.length; i++) {
+                let y1 = holeYPositions[i] * scale;
+                let y2 = holeYPositions[i + 1] * scale;
+                
+                const ccLine = document.createElement('div');
+                ccLine.className = 'handle-v-line';
+                ccLine.style.top = y1 + 'px';
+                ccLine.style.height = (y2 - y1) + 'px';
+                ccLine.style.left = (xPx + (side === 'kaire' ? ccOffset : -ccOffset)) + 'px';
+                box.appendChild(ccLine);
+
+                const ccTxt = document.createElement('div');
+                ccTxt.className = 'handle-dim-text';
+                ccTxt.innerText = `C-C: ${ccs[i]}mm`;
+                ccTxt.style.top = (y1 + (y2 - y1) / 2 - 8) + 'px';
+                ccTxt.style.left = (xPx + (side === 'kaire' ? (ccOffset + 6) : -(ccOffset + 60))) + 'px';
+                box.appendChild(ccTxt);
+            }
+        }
+
+        if (millingHandleInfo && millingHandleInfo.active) {
+            let yMm = 0;
+            if (millingHandleInfo.ref === 'virsus') {
+                yMm = millingHandleInfo.pos;
+            } else if (millingHandleInfo.ref === 'apacia') {
+                yMm = h - millingHandleInfo.pos;
+            } else { 
+                yMm = h / 2;
+            }
+
+            if (yMm >= 0 && yMm <= h) {
+                let topPx = yMm * scale;
+                
+                const mark = document.createElement('div');
+                mark.className = 'milling-handle-line';
+                mark.style.top = topPx + 'px';
+                
+                if (side === 'kaire') {
+                    mark.style.right = '-12px'; 
+                } else { 
+                    mark.style.left = '-12px'; 
+                }
+                box.appendChild(mark);
+
+                const dimLine = document.createElement('div');
+                dimLine.className = 'handle-v-line';
+                
+                let vTop = 0;
+                let vHeight = 0;
+                let labelVal = Math.round(millingHandleInfo.pos);
+
+                if (millingHandleInfo.ref === 'virsus') {
+                    vTop = 0;
+                    vHeight = topPx;
+                } else if (millingHandleInfo.ref === 'apacia') {
+                    vTop = topPx;
+                    vHeight = (h * scale) - topPx;
+                } else { 
+                    vTop = topPx;
+                    vHeight = (h * scale) - topPx;
+                    labelVal = Math.round(h / 2);
+                }
+
+                const mOffset = 30; 
+                dimLine.style.top = vTop + 'px';
+                dimLine.style.height = vHeight + 'px';
+                if (side === 'kaire') {
+                    dimLine.style.right = `-${mOffset}px`;
+                } else { 
+                    dimLine.style.left = `-${mOffset}px`;
+                }
+                box.appendChild(dimLine);
+
+                const txt = document.createElement('div');
+                txt.className = 'handle-dim-text';
+                txt.style.transform = 'translateY(-100%)'; 
+                txt.style.marginBottom = '6px';
+
+                let refCodeText = millingHandleInfo.ref === 'virsus' ? 'V' : (millingHandleInfo.ref === 'centras' ? 'Viduryje' : 'Centras');
+                let lengthTxt = millingHandleInfo.length > 0 ? `, L=${millingHandleInfo.length}mm` : '';
+                txt.innerText = `${millingHandleInfo.model}${lengthTxt} (${labelVal}mm ${refCodeText})`;
+                txt.style.top = (topPx - 4) + 'px';
+                
+                const textGap = 10;
+                if (side === 'kaire') {
+                    txt.style.left = `calc(100% + ${mOffset + textGap}px)`;
+                } else { 
+                    txt.style.right = `calc(100% + ${mOffset + textGap}px)`;
+                }
+                box.appendChild(txt);
+            }
         }
     }
 
@@ -1141,7 +1167,7 @@ function calculateAbsoluteHingesFromTop(hinges, totalH) {
 
 function getMillingInstructionsHtml(hinges, hMain, hMirror, mainSide, qtyMain, qtyMirror, isMirrorActive) {
     function buildTableForDoor(side, qty, totalH) {
-        if (qty <= 0) return '';
+        if (qty <= 0 || totalH <= 0) return '';
         const absFromTop = calculateAbsoluteHingesFromTop(hinges, totalH);
         if (absFromTop.length === 0) return '';
 
@@ -1248,8 +1274,7 @@ function getHingeDetails() {
         titleParts.push(plate === 'kryzmine' ? 'Kryžminė plokštelė 3D' : 'Siaura plokštelė 3D');
 
     } else {
-        // Blum lankstų konfigūracija
-        logoCode = ''; // Blum logotipų nenaudojam
+        logoCode = '';
 
         titleParts.push(mount === 'isorinis' ? 'išorinis' : (mount === 'pusinis' ? 'pusinis' : 'vidinis'));
         titleParts.push(color);
@@ -1278,7 +1303,6 @@ function getHingeDetails() {
         }
         titleParts.push(plate === 'kryzmine' ? 'Kryžminė plokštelė 3D' : 'Siaura plokštelė 3D');
 
-        // Pridedame Blum dangtelius ir jų kainas
         if (mount === 'isorinis') {
             if (color === 'baltas') {
                 capCode = '100405';
@@ -1288,7 +1312,6 @@ function getHingeDetails() {
                 price += 0.36;
             }
         } else {
-            // Pusinis arba vidinis
             if (color === 'baltas') {
                 capCode = '100406';
                 price += 0.25;
@@ -1470,10 +1493,13 @@ function gatherCurrentConfigData() {
     const handleDrillingFeePerDoor = hasHandle ? (handleHolesCount * 2.00) : 0;
 
     function calcSingleDoorPrice(dH, dW) {
-        const pCutW = dW - cutMinusW;
-        const pCutH = dH - cutMinusH;
-        const gH = dH + nh;
-        const gW = dW + nw;
+        if (dH <= 0 || dW <= 0) {
+            return { price: 0, frameCost: 0, glassCost: 0, paintingCost: 0, isPainted: false, pCutW: 0, pCutH: 0, gW: 0, gH: 0 };
+        }
+        const pCutW = Math.max(0, dW - cutMinusW);
+        const pCutH = Math.max(0, dH - cutMinusH);
+        const gH = Math.max(0, dH + nh);
+        const gW = Math.max(0, dW + nw);
         
         const frameAreaForGlassPricing = Math.max(0, (dH / 1000) * (dW / 1000));
         let pureGlassCost = frameAreaForGlassPricing * glassM2Price;
@@ -1574,9 +1600,9 @@ function gatherCurrentConfigData() {
         } else if (shelfThickness === '5 mm') {
             shelfM2Price = 48;
         } else if (shelfThickness === '6 mm') {
-        if (shelfType === 'Skaidrus stiklas') shelfM2Price = 33;
-        else if (shelfType === 'Optiwhite') shelfM2Price = 48;
-        else shelfM2Price = 48;
+            if (shelfType === 'Skaidrus stiklas') shelfM2Price = 33;
+            else if (shelfType === 'Optiwhite') shelfM2Price = 48;
+            else shelfM2Price = 48;
         }
 
         const shelfAreaM2 = (shelfH / 1000) * (shelfW / 1000);
@@ -1649,12 +1675,8 @@ function gatherCurrentConfigData() {
     let dimsShortTxt = `${h}x${w} mm`;
     let doorGlassDimsStr = `${mainDoorCalc.gH} x ${mainDoorCalc.gW} mm`;
 
-    if (qtyMain > 0) {
-        if (qtyMain > 1) {
-            doorGlassDimsStr = `${mainDoorCalc.gH} x ${mainDoorCalc.gW} mm (${qtyMain} vnt.)`;
-        } else {
-            doorGlassDimsStr = `${mainDoorCalc.gH} x ${mainDoorCalc.gW} mm`;
-        }
+    if (qtyMain > 1) {
+        doorGlassDimsStr = `${mainDoorCalc.gH} x ${mainDoorCalc.gW} mm (${qtyMain} vnt.)`;
     }
 
     if (mirror) {
@@ -1746,8 +1768,8 @@ function gatherCurrentConfigData() {
         </div>
     `;
 
-    const maxW = Math.max(w, wMirror);
-    const maxH = Math.max(h, hMirror);
+    const maxW = Math.max(1, w, wMirror);
+    const maxH = Math.max(1, h, hMirror);
     const scale = Math.min(250 / maxW, 320 / maxH);
 
     const tempDiv = document.createElement('div');
@@ -1777,7 +1799,10 @@ function gatherCurrentConfigData() {
         shelfQty: shelfQty,
         shelfEdges: shelfEdgesStr,
         totalPrice: totalOrderPrice,
-        summaryHtml: fullCardWithDrawings
+        summaryHtml: fullCardWithDrawings,
+        hinges: hinges,
+        handleInfo: handleInfo,
+        millingHandleInfo: millingHandleInfo
     };
 }
 
@@ -1796,42 +1821,30 @@ function draw() {
     const currentConfig = gatherCurrentConfigData();
     document.getElementById('results').innerHTML = currentConfig.summaryHtml.split('<div style="display:flex;')[0];
     
-    const maxW = doorDimensions.main.w;
-    const maxH = doorDimensions.main.h;
-    const scale = Math.min(250 / maxW, 320 / maxH);
-    const mainSide = document.getElementById('puse').value;
     const mirror = document.getElementById('mirror').checked;
+    const isMobile = window.innerWidth <= 850;
+    const maxW = Math.max(1, doorDimensions.main.w, mirror ? doorDimensions.mirror.w : 0);
+    const maxH = Math.max(1, doorDimensions.main.h, mirror ? doorDimensions.mirror.h : 0);
+    const baseMaxW = isMobile ? 160 : 250;
+    const baseMaxH = isMobile ? 240 : 320;
+    const scale = (doorDimensions.main.w > 0 && doorDimensions.main.h > 0) 
+        ? Math.min(baseMaxW / maxW, baseMaxH / maxH) 
+        : Math.min(baseMaxW / 450, baseMaxH / 720);
+
+    const mainSide = document.getElementById('puse').value;
     const qtyMain = parseInt(document.getElementById('qtyMain').value) || 0;
     const qtyMirror = mirror ? (parseInt(document.getElementById('qtyMirror').value) || 0) : 0;
     
     const previewContainer = document.createElement('div');
+    previewContainer.className = 'preview-drawings-wrapper';
     previewContainer.style.display = 'flex';
     previewContainer.style.gap = '20px';
     previewContainer.style.alignItems = 'flex-start';
-    
-    let hinges = [];
-    const mode = document.querySelector('input[name="mode"]:checked').value;
-    if (mode === 'virsus' || mode === 'abu') {
-        const v = document.getElementById('pozV')?.value || "";
-        v.split(',').forEach(s => { if(s.trim()) hinges.push({val: parseFloat(s.trim()), type: 'V'}) });
-    }
-    if (mode === 'apacia' || mode === 'abu') {
-        const a = document.getElementById('pozA')?.value || "";
-        a.split(',').forEach(s => { if(s.trim()) hinges.push({val: parseFloat(s.trim()), type: 'A'}) });
-    }
-    
-    const hasHandle = document.getElementById('has-handle').checked;
-    const handleHolesCount = parseInt(document.getElementById('handle-holes-count').value) || 1;
-    let ccs = [parseFloat(document.getElementById('handle-cc1').value) || 128];
-    const handleInfo = { active: hasHandle, count: handleHolesCount, ccs: ccs, refY: document.getElementById('handle-ref-y').value, yPos: parseFloat(document.getElementById('handle-y-pos').value) || 0, xPos: parseFloat(document.getElementById('handle-x-pos').value) || 35, diameter: 7 };
-    
-    const hasMillingHandle = document.getElementById('has-milling-handle').checked;
-    const millingHandleInfo = { active: hasMillingHandle, model: document.getElementById('milling-handle-model').value, length: parseFloat(document.getElementById('milling-handle-length').value) || 0, ref: document.getElementById('milling-handle-ref').value, pos: parseFloat(document.getElementById('milling-handle-pos').value) || 0 };
 
-    previewContainer.appendChild(createDrawing('Pagrindinė ('+mainSide+')', 'main', doorDimensions.main.w, doorDimensions.main.h, scale, mainSide, hinges, qtyMain, 'qtyMain', handleInfo, millingHandleInfo));
+    previewContainer.appendChild(createDrawing('Pagrindinė ('+mainSide+')', 'main', doorDimensions.main.w, doorDimensions.main.h, scale, mainSide, currentConfig.hinges, qtyMain, 'qtyMain', currentConfig.handleInfo, currentConfig.millingHandleInfo));
     if (mirror) {
         const otherSide = mainSide === 'kaire' ? 'desine' : 'kaire';
-        previewContainer.appendChild(createDrawing('Veidrodinė ('+otherSide+')', 'mirror', doorDimensions.mirror.w, doorDimensions.mirror.h, scale, otherSide, hinges, qtyMirror, 'qtyMirror', handleInfo, millingHandleInfo));
+        previewContainer.appendChild(createDrawing('Veidrodinė ('+otherSide+')', 'mirror', doorDimensions.mirror.w, doorDimensions.mirror.h, scale, otherSide, currentConfig.hinges, qtyMirror, 'qtyMirror', currentConfig.handleInfo, currentConfig.millingHandleInfo));
     }
     document.getElementById('preview-area').innerHTML = '';
     document.getElementById('preview-area').appendChild(previewContainer);
@@ -1876,6 +1889,68 @@ function updateCartUI() {
         `;
     });
     list.innerHTML = html;
+}
+
+function resetCalculator() {
+    const clientName = document.getElementById('client-name');
+    const clientPhone = document.getElementById('client-phone');
+    if (clientName) clientName.value = '';
+    if (clientPhone) clientPhone.value = '';
+    
+    const hInput = document.getElementById('h');
+    const wInput = document.getElementById('w');
+    if (hInput) hInput.value = '0';
+    if (wInput) wInput.value = '0';
+    
+    doorDimensions.main.h = 0;
+    doorDimensions.main.w = 0;
+    doorDimensions.mirror.h = 0;
+    doorDimensions.mirror.w = 0;
+    
+    const qtyMain = document.getElementById('qtyMain');
+    const qtyMirror = document.getElementById('qtyMirror');
+    if (qtyMain) qtyMain.value = '1';
+    if (qtyMirror) qtyMirror.value = '1';
+    
+    const mirrorCheck = document.getElementById('mirror');
+    if (mirrorCheck) {
+        mirrorCheck.checked = true;
+        toggleMirror();
+    }
+
+    const profilis = document.getElementById('profilis');
+    const stiklas = document.getElementById('stiklas');
+    const tempered = document.getElementById('tempered-glass');
+    if (profilis) profilis.selectedIndex = 0;
+    if (stiklas) stiklas.selectedIndex = 0;
+    if (tempered) tempered.checked = false;
+
+    const shelfQty = document.getElementById('shelf-qty');
+    if (shelfQty) shelfQty.value = '0';
+    
+    const hasHandle = document.getElementById('has-handle');
+    if (hasHandle) {
+        hasHandle.checked = false;
+        toggleHandleSection();
+    }
+
+    const hasMilling = document.getElementById('has-milling-handle');
+    if (hasMilling) {
+        hasMilling.checked = false;
+        toggleMillingHandleSection();
+    }
+
+    const orderComment = document.getElementById('order-comment');
+    if (orderComment) orderComment.value = '';
+    
+    orderCart = [];
+    updateCartUI();
+    
+    setTodayDateInput();
+    checkSpecial();
+    updateHingeOptions();
+    checkPleveleVisibility();
+    draw();
 }
 
 function sendToGoogleSheets() {
@@ -1958,7 +2033,6 @@ function printOrder() {
                     .production-table { width: 100%; border-collapse: collapse; }
                     .production-table td { padding: 1px 0; color: #212529; }
                     
-                    /* Spausdinimo stiliai brėžiniams kortelės viduje su priverstiniu spalvų atvaizdavimu */
                     .drawing-container { display: flex; flex-direction: column; align-items: center; gap: 4px; page-break-inside: avoid; break-inside: avoid; margin: 8px 0; }
                     .drawing-label { font-weight: bold; color: #2d3436; text-transform: uppercase; font-size: 10px; background: #fff; padding: 2px 8px; border-radius: 10px; border: 1px solid #ccc; }
                     .drawing-dims-header { font-size: 11px; font-weight: 800; color: #000; display: flex; align-items: center; gap: 4px; background: #fff; padding: 2px 6px; border: 1px solid #3498db; border-radius: 4px; }
@@ -1975,7 +2049,7 @@ function printOrder() {
                     .handle-dim-text { position: absolute; font-size: 8px; font-weight: bold; background: #ffffff; color: #000000; padding: 1px 3px; border: 1px solid #000000; z-index: 15; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
                     @page { 
-                        size: A4;
+                        size: A4; 
                         margin: 8mm; 
                     }
                     @media print {
@@ -2012,13 +2086,14 @@ function printOrder() {
     printWindow.document.write(fullPrintHtml);
     printWindow.document.close();
     
-    // Mikro-pauzė teisingam elementų suderinimui be tuščių puslapių
     setTimeout(() => {
         printWindow.focus();
         printWindow.print();
         printWindow.close();
     }, 400);
 }
+
+window.addEventListener('resize', draw);
 
 updateInputs();
 checkPleveleVisibility();

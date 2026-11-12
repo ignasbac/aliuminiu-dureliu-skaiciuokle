@@ -2014,6 +2014,11 @@ function resetCalculator() {
     checkSpecial();
     updateHingeOptions();
     checkPleveleVisibility();
+    const modeAbux = document.querySelector('input[name="mode"][value="abu"]');
+    if (modeAbux) {
+        modeAbux.checked = true;
+        updateInputs();
+    }
     draw();
 }
 

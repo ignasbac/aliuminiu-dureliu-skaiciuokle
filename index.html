@@ -150,8 +150,29 @@
         .btn-add-cart:hover { background: #2471a3; }
         .btn-remove-item { background: #e74c3c; color: white; border: none; border-radius: 3px; padding: 2px 6px; cursor: pointer; font-size: 10px; font-weight: bold; }
         .btn-remove-item:hover { background: #c0392b; }
+        .btn-archive-item { background: #7f8c8d; color: white; border: none; border-radius: 3px; padding: 2px 6px; cursor: pointer; font-size: 10px; font-weight: bold; margin-right: 3px; }
+        .btn-archive-item:hover { background: #606f70; }
+        .btn-print-item { background: #2980b9; color: white; border: none; border-radius: 3px; padding: 2px 6px; cursor: pointer; font-size: 10px; font-weight: bold; margin-right: 3px; }
+        .btn-print-item:hover { background: #2471a3; }
         .btn-order { width: 100%; margin-top: 10px; padding: 10px; background: #27ae60; color: white; font-size: 14px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
         .btn-order:hover { background: #219150; }
+
+        .admin-bar { display: flex; gap: 6px; margin-top: 8px; }
+        .btn-admin { flex: 2; padding: 8px; background: #34495e; color: white; font-size: 11px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
+        .btn-key { flex: 1; padding: 8px; background: #95a5a6; color: white; font-size: 11px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
+        
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 20px; border-radius: 10px; width: 1150px; max-width: 98%; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        
+        .tabs-header { display: flex; gap: 5px; margin-bottom: 10px; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
+        .tab-btn { padding: 6px 15px; background: #e2e8f0; border: none; border-radius: 5px 5px 0 0; font-weight: bold; cursor: pointer; font-size: 12px; color: #4a5568; }
+        .tab-btn.active { background: #3498db; color: white; }
+
+        .orders-table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 11px; }
+        .orders-table th, .orders-table td { border: 1px solid #ddd; padding: 6px; text-align: left; }
+        .orders-table th { background: #f1f3f5; color: #333; }
+
+        .bulk-actions-bar { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 8px; background: #f8f9fa; border-radius: 6px; border: 1px solid #e2e8f0; }
 
         @media print {
             @page { margin: 5mm; size: A4; }
@@ -162,7 +183,7 @@
                 -webkit-print-color-adjust: exact; 
                 print-color-adjust: exact; 
             }
-            .controls, .preview-area, .btn-add-cart, .btn-order, .cart-container { display: none !important; }
+            .controls, .preview-area, .btn-add-cart, .btn-order, .cart-container, .admin-bar { display: none !important; }
         }
     </style>
 </head>
@@ -206,83 +227,83 @@
             <label>Pasirinkite Profilį:</label>
             <select id="profilis" onchange="checkSpecial(); updateHingeOptions(); draw();">
                 <optgroup label="Z-1 (Atimtis: -18 mm)">
-                    <option value="10" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Aliuminis C-0 (10€/m)</option>
-                    <option value="10" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Juodas matinis C-35 (10€/m)</option>
-                    <option value="12" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Juodas šlifuotas C-35S (12€/m)</option>
-                    <option value="12" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Auksas matinis C-23 (12€/m)</option>
-                    <option value="15" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Auksas blizgus AR (15€/m)</option>
-                    <option value="15" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Auksas šlifuotas C-23S (15€/m)</option>
-                    <option value="15" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Auksas tamsus C-235 (15€/m)</option>
-                    <option value="12" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Baltas matinis RAL9003 (12€/m)</option>
-                    <option value="12" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Šampanas C-32 (12€/m)</option>
-                    <option value="12" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Inox C-30S (12€/m)</option>
-                    <option value="12" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Konjakas C-33 (12€/m)</option>
-                    <option value="15" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Konjakas tamsus C-34 (spec. užsakymas) (15€/m)</option>
-                    <option value="15" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Pilkas C-31 (spec. užsakymas) (15€/m)</option>
-                    <option value="15" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Varis C-24 (spec. užsakymas) (15€/m)</option>
+                    <option value="10" data-code="Z-1" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Aliuminis C-0 (10€/m)</option>
+                    <option value="10" data-code="Z-1" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Juodas matinis C-35 (10€/m)</option>
+                    <option value="12" data-code="Z-1" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Juodas šlifuotas C-35S (12€/m)</option>
+                    <option value="12" data-code="Z-1" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Auksas matinis C-23 (12€/m)</option>
+                    <option value="15" data-code="Z-1" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Auksas blizgus AR (15€/m)</option>
+                    <option value="15" data-code="Z-1" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Auksas šlifuotas C-23S (15€/m)</option>
+                    <option value="15" data-code="Z-1" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Auksas tamsus C-235 (15€/m)</option>
+                    <option value="12" data-code="Z-1" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Baltas matinis RAL9003 (12€/m)</option>
+                    <option value="12" data-code="Z-1" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Šampanas C-32 (12€/m)</option>
+                    <option value="12" data-code="Z-1" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Inox C-30S (12€/m)</option>
+                    <option value="12" data-code="Z-1" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Konjakas C-33 (12€/m)</option>
+                    <option value="15" data-code="Z-1" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Konjakas tamsus C-34 (15€/m)</option>
+                    <option value="15" data-code="Z-1" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Pilkas C-31 (15€/m)</option>
+                    <option value="15" data-code="Z-1" data-nw="-27" data-nh="-28" data-cut-w="18" data-cut-h="18">Z-1 Varis C-24 (15€/m)</option>
                 </optgroup>
                 <optgroup label="Z-4 (Atimtis: -49 mm)">
-                    <option value="15" data-nw="-20" data-nh="-20" data-cut-w="49" data-cut-h="49">Z-4 Aliuminis C-0 (15€/m)</option>
-                    <option value="15" data-nw="-20" data-nh="-20" data-cut-w="49" data-cut-h="49">Z-4 Juodas matinis C-35 (15€/m)</option>
-                    <option value="18" data-nw="-20" data-nh="-20" data-cut-w="49" data-cut-h="49">Z-4 Auksas matinis C-23 (18€/m)</option>
-                    <option value="20" data-nw="-20" data-nh="-20" data-cut-w="49" data-cut-h="49">Z-4 Auksas blizgus AR (20€/m)</option>
-                    <option value="20" data-nw="-20" data-nh="-20" data-cut-w="49" data-cut-h="49">Z-4 Auksas šlifuotas C-23S (20€/m)</option>
-                    <option value="20" data-nw="-20" data-nh="-20" data-cut-w="49" data-cut-h="49">Z-4 Baltas matinis RAL9003 (20€/m)</option>
-                    <option value="20" data-nw="-20" data-nh="-20" data-cut-w="49" data-cut-h="49">Z-4 Inox C-30S (20€/m)</option>
+                    <option value="15" data-code="Z-4" data-nw="-20" data-nh="-20" data-cut-w="49" data-cut-h="49">Z-4 Aliuminis C-0 (15€/m)</option>
+                    <option value="15" data-code="Z-4" data-nw="-20" data-nh="-20" data-cut-w="49" data-cut-h="49">Z-4 Juodas matinis C-35 (15€/m)</option>
+                    <option value="18" data-code="Z-4" data-nw="-20" data-nh="-20" data-cut-w="49" data-cut-h="49">Z-4 Auksas matinis C-23 (18€/m)</option>
+                    <option value="20" data-code="Z-4" data-nw="-20" data-nh="-20" data-cut-w="49" data-cut-h="49">Z-4 Auksas blizgus AR (20€/m)</option>
+                    <option value="20" data-code="Z-4" data-nw="-20" data-nh="-20" data-cut-w="49" data-cut-h="49">Z-4 Auksas šlifuotas C-23S (20€/m)</option>
+                    <option value="20" data-code="Z-4" data-nw="-20" data-nh="-20" data-cut-w="49" data-cut-h="49">Z-4 Baltas matinis RAL9003 (20€/m)</option>
+                    <option value="20" data-code="Z-4" data-nw="-20" data-nh="-20" data-cut-w="49" data-cut-h="49">Z-4 Inox C-30S (20€/m)</option>
                 </optgroup>
                 <optgroup label="Z-10 (Atimtis: -18 mm)">
-                    <option value="10" data-nw="-5" data-nh="-6" data-cut-w="18" data-cut-h="18">Z-10 Aliuminis C-0 (10€/m)</option>
-                    <option value="10" data-nw="-5" data-nh="-6" data-cut-w="18" data-cut-h="18">Z-10 Juodas matinis C-35 (10€/m)</option>
-                    <option value="12" data-nw="-5" data-nh="-6" data-cut-w="18" data-cut-h="18">Z-10 Auksas šlifuotas C-23S (12€/m)</option>
-                    <option value="12" data-nw="-5" data-nh="-6" data-cut-w="18" data-cut-h="18">Z-10 Inox C-30S (12€/m)</option>
+                    <option value="10" data-code="Z-10" data-nw="-5" data-nh="-6" data-cut-w="18" data-cut-h="18">Z-10 Aliuminis C-0 (10€/m)</option>
+                    <option value="10" data-code="Z-10" data-nw="-5" data-nh="-6" data-cut-w="18" data-cut-h="18">Z-10 Juodas matinis C-35 (10€/m)</option>
+                    <option value="12" data-code="Z-10" data-nw="-5" data-nh="-6" data-cut-w="18" data-cut-h="18">Z-10 Auksas šlifuotas C-23S (12€/m)</option>
+                    <option value="12" data-code="Z-10" data-nw="-5" data-nh="-6" data-cut-w="18" data-cut-h="18">Z-10 Inox C-30S (12€/m)</option>
                 </optgroup>
                 <optgroup label="Z-11 (Atimtis: -44 mm)">
-                    <option value="13" data-nw="-1" data-nh="-1" data-cut-w="44" data-cut-h="44">Z-11 Aliuminis C-0 (13€/m)</option>
-                    <option value="13" data-nw="-1" data-nh="-1" data-cut-w="44" data-cut-h="44">Z-11 Juodas matinis C-35 (13€/m)</option>
-                    <option value="16" data-nw="-1" data-nh="-1" data-cut-w="44" data-cut-h="44">Z-11 Auksas matinis C-23 (16€/m)</option>
-                    <option value="16" data-nw="-1" data-nh="-1" data-cut-w="44" data-cut-h="44">Z-11 Baltas matinis RAL9003 (16€/m)</option>
-                    <option value="16" data-nw="-1" data-nh="-1" data-cut-w="44" data-cut-h="44">Z-11 Inox C-30S (16€/m)</option>
-                    <option value="16" data-nw="-1" data-nh="-1" data-cut-w="44" data-cut-h="44">Z-11 Konjakas C-33 (16€/m)</option>
+                    <option value="13" data-code="Z-11" data-nw="-1" data-nh="-1" data-cut-w="44" data-cut-h="44">Z-11 Aliuminis C-0 (13€/m)</option>
+                    <option value="13" data-code="Z-11" data-nw="-1" data-nh="-1" data-cut-w="44" data-cut-h="44">Z-11 Juodas matinis C-35 (13€/m)</option>
+                    <option value="16" data-code="Z-11" data-nw="-1" data-nh="-1" data-cut-w="44" data-cut-h="44">Z-11 Auksas matinis C-23 (16€/m)</option>
+                    <option value="16" data-code="Z-11" data-nw="-1" data-nh="-1" data-cut-w="44" data-cut-h="44">Z-11 Baltas matinis RAL9003 (16€/m)</option>
+                    <option value="16" data-code="Z-11" data-nw="-1" data-nh="-1" data-cut-w="44" data-cut-h="44">Z-11 Inox C-30S (16€/m)</option>
+                    <option value="16" data-code="Z-11" data-nw="-1" data-nh="-1" data-cut-w="44" data-cut-h="44">Z-11 Konjakas C-33 (16€/m)</option>
                 </optgroup>
                 <optgroup label="Z-12 (Atimtis: -44 mm)">
-                    <option value="20" data-nw="-79" data-nh="-79" data-cut-w="44" data-cut-h="44">Z-12 Aliuminis C-0 (20€/m)</option>
-                    <option value="20" data-nw="-79" data-nh="-79" data-cut-w="44" data-cut-h="44">Z-12 Juodas šlifuotas C-35S (20€/m)</option>
-                    <option value="20" data-nw="-79" data-nh="-79" data-cut-w="44" data-cut-h="44">Z-12 Auksas šlifuotas C-23S (20€/m)</option>
-                    <option value="20" data-nw="-79" data-nh="-79" data-cut-w="44" data-cut-h="44">Z-12 Baltas RAL9003 Mat (20€/m)</option>
-                    <option value="20" data-nw="-79" data-nh="-79" data-cut-w="44" data-cut-h="44">Z-12 Inox C-30S (20€/m)</option>
+                    <option value="20" data-code="Z-12" data-nw="-79" data-nh="-79" data-cut-w="44" data-cut-h="44">Z-12 Aliuminis C-0 (20€/m)</option>
+                    <option value="20" data-code="Z-12" data-nw="-79" data-nh="-79" data-cut-w="44" data-cut-h="44">Z-12 Juodas šlifuotas C-35S (20€/m)</option>
+                    <option value="20" data-code="Z-12" data-nw="-79" data-nh="-79" data-cut-w="44" data-cut-h="44">Z-12 Auksas šlifuotas C-23S (20€/m)</option>
+                    <option value="20" data-code="Z-12" data-nw="-79" data-nh="-79" data-cut-w="44" data-cut-h="44">Z-12 Baltas RAL9003 Mat (20€/m)</option>
+                    <option value="20" data-code="Z-12" data-nw="-79" data-nh="-79" data-cut-w="44" data-cut-h="44">Z-12 Inox C-30S (20€/m)</option>
                 </optgroup>
                 <optgroup label="Z-13 (Atimtis: -44 mm)">
-                    <option value="12" data-nw="-5" data-nh="-6" data-cut-w="44" data-cut-h="44">Z-13 Aliuminis C-0 (12€/m)</option>
-                    <option value="14" data-nw="-5" data-nh="-6" data-cut-w="44" data-cut-h="44">Z-13 Juodas matinis C-35 (14€/m)</option>
-                    <option value="15" data-nw="-5" data-nh="-6" data-cut-w="44" data-cut-h="44">Z-13 Auksas matinis C-23 (15€/m)</option>
-                    <option value="18" data-nw="-5" data-nh="-6" data-cut-w="44" data-cut-h="44">Z-13 Auksas šlifuotas C-23S (18€/m)</option>
-                    <option value="17" data-nw="-5" data-nh="-6" data-cut-w="44" data-cut-h="44">Z-13 Baltas RAL9003 MAT (17€/m)</option>
-                    <option value="17" data-nw="-5" data-nh="-6" data-cut-w="44" data-cut-h="44">Z-13 Inox C-30S (17€/m)</option>
+                    <option value="12" data-code="Z-13" data-nw="-5" data-nh="-6" data-cut-w="44" data-cut-h="44">Z-13 Aliuminis C-0 (12€/m)</option>
+                    <option value="14" data-code="Z-13" data-nw="-5" data-nh="-6" data-cut-w="44" data-cut-h="44">Z-13 Juodas matinis C-35 (14€/m)</option>
+                    <option value="15" data-code="Z-13" data-nw="-5" data-nh="-6" data-cut-w="44" data-cut-h="44">Z-13 Auksas matinis C-23 (15€/m)</option>
+                    <option value="18" data-code="Z-13" data-nw="-5" data-nh="-6" data-cut-w="44" data-cut-h="44">Z-13 Auksas šlifuotas C-23S (18€/m)</option>
+                    <option value="17" data-code="Z-13" data-nw="-5" data-nh="-6" data-cut-w="44" data-cut-h="44">Z-13 Baltas RAL9003 MAT (17€/m)</option>
+                    <option value="17" data-code="Z-13" data-nw="-5" data-nh="-6" data-cut-w="44" data-cut-h="44">Z-13 Inox C-30S (17€/m)</option>
                 </optgroup>
                 <optgroup label="Z-16 (Atimtis: -18 mm)">
-                    <option value="10" data-nw="-1" data-nh="-1" data-cut-w="18" data-cut-h="18">Z-16 Juodas matinis C-35 (10€/m)</option>
-                    <option value="11" data-nw="-1" data-nh="-1" data-cut-w="18" data-cut-h="18">Z-16 Auksas šlifuotas C-23S (11€/m)</option>
-                    <option value="11" data-nw="-1" data-nh="-1" data-cut-w="18" data-cut-h="18">Z-16 Šampanas C-32 (11€/m)</option>
-                    <option value="11" data-nw="-1" data-nh="-1" data-cut-w="18" data-cut-h="18">Z-16 Inox C-30S (11€/m)</option>
+                    <option value="10" data-code="Z-16" data-nw="-1" data-nh="-1" data-cut-w="18" data-cut-h="18">Z-16 Juodas matinis C-35 (10€/m)</option>
+                    <option value="11" data-code="Z-16" data-nw="-1" data-nh="-1" data-cut-w="18" data-cut-h="18">Z-16 Auksas šlifuotas C-23S (11€/m)</option>
+                    <option value="11" data-code="Z-16" data-nw="-1" data-nh="-1" data-cut-w="18" data-cut-h="18">Z-16 Šampanas C-32 (11€/m)</option>
+                    <option value="11" data-code="Z-16" data-nw="-1" data-nh="-1" data-cut-w="18" data-cut-h="18">Z-16 Inox C-30S (11€/m)</option>
                 </optgroup>
                 <optgroup label="Z-18 (Atimtis: -44 mm)">
-                    <option value="13" data-nw="-0" data-nh="-0" data-cut-w="44" data-cut-h="44">Z-18 Aliuminis C-0 (13€/m)</option>
-                    <option value="13" data-nw="-0" data-nh="-0" data-cut-w="44" data-cut-h="44">Z-18 Juodas matinis C-35 (13€/m)</option>
-                    <option value="22" data-nw="-0" data-nh="-0" data-cut-w="44" data-cut-h="44">Z-18 Auksas šlifuotas C-23S (22€/m)</option>
-                    <option value="18" data-nw="-0" data-nh="-0" data-cut-w="44" data-cut-h="44">Z-18 Baltas RAL9003 MAT (18€/m)</option>
-                    <option value="16" data-nw="-0" data-nh="-0" data-cut-w="44" data-cut-h="44">Z-18 Inox C-30S (16€/m)</option>
+                    <option value="13" data-code="Z-18" data-nw="-0" data-nh="-0" data-cut-w="44" data-cut-h="44">Z-18 Aliuminis C-0 (13€/m)</option>
+                    <option value="13" data-code="Z-18" data-nw="-0" data-nh="-0" data-cut-w="44" data-cut-h="44">Z-18 Juodas matinis C-35 (13€/m)</option>
+                    <option value="22" data-code="Z-18" data-nw="-0" data-nh="-0" data-cut-w="44" data-cut-h="44">Z-18 Auksas šlifuotas C-23S (22€/m)</option>
+                    <option value="18" data-code="Z-18" data-nw="-0" data-nh="-0" data-cut-w="44" data-cut-h="44">Z-18 Baltas RAL9003 MAT (18€/m)</option>
+                    <option value="16" data-code="Z-18" data-nw="-0" data-nh="-0" data-cut-w="44" data-cut-h="44">Z-18 Inox C-30S (16€/m)</option>
                 </optgroup>
                 <optgroup label="Z-23 (Atimtis: -25 mm)">
-                    <option value="12" data-nw="-42" data-nh="-42" data-cut-w="25" data-cut-h="25">Z-23 Juodas matinis C-35 (12€/m)</option>
-                    <option value="15" data-nw="-42" data-nh="-42" data-cut-w="25" data-cut-h="25">Z-23 Juodas šlifuotas C-35S (15€/m)</option>
+                    <option value="12" data-code="Z-23" data-nw="-42" data-nh="-42" data-cut-w="25" data-cut-h="25">Z-23 Juodas matinis C-35 (12€/m)</option>
+                    <option value="15" data-code="Z-23" data-nw="-42" data-nh="-42" data-cut-w="25" data-cut-h="25">Z-23 Juodas šlifuotas C-35S (15€/m)</option>
                 </optgroup>
                 <optgroup label="Z-24 (Atimtis: -25 mm)">
-                    <option value="15" data-nw="-42" data-nh="-42" data-cut-w="25" data-cut-h="25" data-special="z24">Z-24 Juodas šlifuotas C-35S (15€/m)</option>
-                    <option value="15" data-nw="-42" data-nh="-42" data-cut-w="25" data-cut-h="25" data-special="z24">Z-24 Auksas matinis C-23 (15€/m)</option>
-                    <option value="15" data-nw="-42" data-nh="-42" data-cut-w="25" data-cut-h="25" data-special="z24">Z-24 Auksas šlifuotas C-23S (15€/m)</option>
-                    <option value="15" data-nw="-42" data-nh="-42" data-cut-w="25" data-cut-h="25" data-special="z24">Z-24 Baltas RAL9003 MAT (15€/m)</option>
-                    <option value="15" data-nw="-42" data-nh="-42" data-cut-w="25" data-cut-h="25" data-special="z24">Z-24 Inox C-30S (15€/m)</option>
-                    <option value="15" data-nw="-42" data-nh="-42" data-cut-w="25" data-cut-h="25" data-special="z24">Z-24 Konjakas C-33 (15€/m)</option>
+                    <option value="15" data-code="Z-24" data-nw="-42" data-nh="-42" data-cut-w="25" data-cut-h="25" data-special="z24">Z-24 Juodas šlifuotas C-35S (15€/m)</option>
+                    <option value="15" data-code="Z-24" data-nw="-42" data-nh="-42" data-cut-w="25" data-cut-h="25" data-special="z24">Z-24 Auksas matinis C-23 (15€/m)</option>
+                    <option value="15" data-code="Z-24" data-nw="-42" data-nh="-42" data-cut-w="25" data-cut-h="25" data-special="z24">Z-24 Auksas šlifuotas C-23S (15€/m)</option>
+                    <option value="15" data-code="Z-24" data-nw="-42" data-nh="-42" data-cut-w="25" data-cut-h="25" data-special="z24">Z-24 Baltas RAL9003 MAT (15€/m)</option>
+                    <option value="15" data-code="Z-24" data-nw="-42" data-nh="-42" data-cut-w="25" data-cut-h="25" data-special="z24">Z-24 Inox C-30S (15€/m)</option>
+                    <option value="15" data-code="Z-24" data-nw="-42" data-nh="-42" data-cut-w="25" data-cut-h="25" data-special="z24">Z-24 Konjakas C-33 (15€/m)</option>
                 </optgroup>
             </select>
         </div>
@@ -623,20 +644,93 @@
         </div>
 
         <button class="btn-order" onclick="saveCurrentClient(); sendToGoogleSheets(); printOrder(); setTimeout(resetCalculator, 1000);">UŽSAKYTI / SPAUSDINTI VISKĄ</button>
+        
+        <div class="admin-bar">
+            <button class="btn-admin" onclick="openAdminBoardModal()">📋 Užsakymai & Archyvas</button>
+            <button class="btn-key" onclick="resetSecretToken()">🔑 Keisti raktą</button>
+        </div>
     </div>
 
     <div class="preview-area" id="preview-area"></div>
 </div>
 
+<!-- MODALINIS LANGAS: UŽSAKYMAI, ARCHYVAS IR ATASKAITOS -->
+<div class="modal-overlay" id="admin-modal">
+    <div class="modal-content">
+        <h3 style="margin-top:0; color:#2c3e50;">📋 Užsakymų Lenta, Archyvas & Ataskaitos</h3>
+        
+        <div style="margin-bottom: 15px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
+            <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #34495e;">Ataskaitų eksportas:</h4>
+            <div class="row" style="margin-bottom: 8px;">
+                <div style="flex:1;"><label>Nuo:</label><input type="date" id="report-start-date"></div>
+                <div style="flex:1;"><label>Iki:</label><input type="date" id="report-end-date"></div>
+            </div>
+            <div style="display: flex; gap: 6px;">
+                <button class="btn-add-cart" onclick="downloadReport('pjovimas')" style="background:#2980b9; margin-top:0;">📄 Pjovimas</button>
+                <button class="btn-add-cart" onclick="downloadReport('stiklai')" style="background:#8e44ad; margin-top:0;">🔍 Stiklai</button>
+                <button class="btn-add-cart" onclick="downloadReport('uzsakymai')" style="background:#27ae60; margin-top:0;">📊 Užsakymai</button>
+            </div>
+        </div>
+
+        <div>
+            <!-- Skirtukų mygtukai -->
+            <div class="tabs-header">
+                <button class="tab-btn active" id="tab-active-btn" onclick="switchTab('active')">Aktyvūs užsakymai</button>
+                <button class="tab-btn" id="tab-archive-btn" onclick="switchTab('archive')">Archyvas</button>
+            </div>
+
+            <div class="row" style="margin-bottom: 8px; align-items: center;">
+                <div style="flex: 2;">
+                    <input type="text" id="order-search-input" placeholder="Ieškoti pagal klientą, tel., miestą, profilį, matmenis..." oninput="filterOrdersTable()">
+                </div>
+            </div>
+
+            <!-- Masinių veiksmų juosta -->
+            <div class="bulk-actions-bar">
+                <span style="font-size: 11px; font-weight: bold; color: #2c3e50;">Pažymėti veiksmai:</span>
+                <select id="bulk-status-select" style="width: 150px; padding: 4px; font-size: 11px;">
+                    <option value="Naujas">Naujas</option>
+                    <option value="Gamyboje">Gamyboje</option>
+                    <option value="Baigtas">Baigtas</option>
+                    <option value="Atšauktas">Atšauktas</option>
+                    <option value="Archyvuotas">Archyvuotas</option>
+                </select>
+                <button class="btn-add-cart" onclick="applyBulkStatus()" style="margin-top:0; width:auto; padding:5px 12px; font-size:11px;">Pakeisti pažymėtiems</button>
+            </div>
+
+            <div style="max-height: 350px; overflow-y: auto; margin-top: 8px;">
+                <table class="orders-table" id="orders-list-table">
+                    <thead>
+                        <tr>
+                            <th style="width:30px; text-align:center;"><input type="checkbox" id="select-all-checkbox" onclick="toggleSelectAll(this)"></th>
+                            <th>Data</th>
+                            <th>Klientas</th>
+                            <th>Miestas</th>
+                            <th>Profilis & Matmenys</th>
+                            <th>Stiklas ir Lentynėlės</th>
+                            <th>Kiekis</th>
+                            <th>Suma</th>
+                            <th>Būsena</th>
+                            <th>Veiksmai</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-tbody">
+                        <tr><td colspan="10" style="text-align:center;">Kraunama...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <button onclick="closeAdminBoardModal()" style="width:100%; margin-top:15px; padding:8px; background:#e74c3c; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">Uždaryti</button>
+    </div>
+</div>
+
 <script>
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0dkSvbPhPp8tIZ1gZuTTE9itNPM-pqNoS1kmVgsUIV0OFt-USut1qmF314WYfpVqApg/exec";
 
-let doorDimensions = {
-    main: { h: 0, w: 0 },
-    mirror: { h: 0, w: 0 }
-};
-
 let orderCart = [];
+let allLoadedOrders = [];
+let currentTab = 'active'; // 'active' arba 'archive'
 
 function setTodayDateInput() {
     const today = new Date();
@@ -911,6 +1005,11 @@ function updateQtyFromDrawing(inputId, val) {
     document.getElementById(inputId).value = isNaN(newQty) ? 0 : newQty;
     draw();
 }
+
+let doorDimensions = {
+    main: { h: 0, w: 0 },
+    mirror: { h: 0, w: 0 }
+};
 
 function createDrawing(label, doorKey, w, h, scale, side, hinges, currentQty, qtyInputId, handleInfo, millingHandleInfo) {
     const container = document.createElement('div');
@@ -1733,17 +1832,18 @@ function gatherCurrentConfigData() {
         totalShelvesPrice = singleShelfTotal * shelfQty;
 
         let edgesArr = [];
-        if (isPolished) edgesArr.push('Poliruotos kr.');
-        if (isGround) edgesArr.push('Šlifuotos kr.');
+        if (isPolished) edgesArr.push('Poliruota');
+        if (isGround) edgesArr.push('Šlifuota');
         if (isShelfTempered) edgesArr.push('Grūdintas');
-        shelfEdgesStr = edgesArr.length > 0 ? edgesArr.join(', ') : 'Nėra';
+        shelfEdgesStr = edgesArr.length > 0 ? edgesArr.join(', ') : 'Nėra kraštinio apdirbimo';
         let edgesTxt = edgesArr.length > 0 ? ` (${edgesArr.join(', ')})` : '';
 
         shelfDimsDesc = `${shelfH} x ${shelfW} mm`;
-        shelfGlassDesc = shelfType;
+        shelfGlassDesc = `${shelfType} ${shelfThickness}`;
+        if (isShelfTempered) shelfGlassDesc += " (Grūdintas)";
         shelfThicknessDesc = shelfThickness;
 
-        shelfSummaryHtml = `<tr><td colspan="2"><b>Stiklo lentynėlės:</b> <span style="color:#2980b9; font-weight:bold;">${shelfDimsDesc} | ${shelfGlassDesc} ${shelfThicknessDesc} | Kiekis: ${shelfQty} vnt.${edgesTxt}</span></td></tr>`;
+        shelfSummaryHtml = `<tr><td colspan="2"><b>Stiklo lentynėlės:</b> <span style="color:#2980b9; font-weight:bold;">${shelfDimsDesc} | ${shelfGlassDesc} | Kiekis: ${shelfQty} vnt.${edgesTxt}</span></td></tr>`;
     }
 
     const totalOrderPrice = totalDoorsPrice + totalShelvesPrice;
@@ -1906,12 +2006,18 @@ function gatherCurrentConfigData() {
 
     const fullCardWithDrawings = summaryHtmlContent + `<div style="display:flex; gap:15px; justify-content:center; margin-top:15px; flex-wrap:wrap;">${tempDiv.innerHTML}</div>`;
 
+    let shelfInfoFullStr = shelfQty > 0 ? `${shelfQty} vnt., ${shelfDimsDesc}, ${shelfGlassDesc} (${shelfEdgesStr})` : 'Nėra';
+
     return {
         profileText: `${profileText} (${qtyDetailsText})`,
         dimsShortTxt: dimsShortTxt,
         qtyText: totalQty,
         height: h,
         width: w,
+        cutH: mainDoorCalc.pCutH,
+        cutW: mainDoorCalc.pCutW,
+        profileCode: selProf.dataset.code || "Z-1",
+        profileClean: profileText,
         doorGlass: doorGlassDesc,
         doorGlassDims: doorGlassDimsStr,
         shelfGlass: shelfGlassDesc,
@@ -1919,6 +2025,7 @@ function gatherCurrentConfigData() {
         shelfThickness: shelfThicknessDesc,
         shelfQty: shelfQty,
         shelfEdges: shelfEdgesStr,
+        shelfInfoFull: shelfInfoFullStr,
         totalPrice: totalOrderPrice,
         summaryHtml: fullCardWithDrawings,
         hinges: hinges,
@@ -2081,6 +2188,289 @@ function resetCalculator() {
     draw();
 }
 
+function getOrRequestSecretToken() {
+    let token = localStorage.getItem('gamyba_secret_token');
+    if (!token) {
+        token = prompt("Įveskite slaptąjį gamybos raktą:");
+        if (token && token.trim() !== "") {
+            token = token.trim();
+            localStorage.setItem('gamyba_secret_token', token);
+        } else {
+            return null;
+        }
+    }
+    return token;
+}
+
+function resetSecretToken() {
+    localStorage.removeItem('gamyba_secret_token');
+    alert("Slaptasis raktas ištrintas iš šio įrenginio.");
+}
+
+function openAdminBoardModal() {
+    const token = getOrRequestSecretToken();
+    if (!token) return;
+
+    fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "checkAdmin", secretToken: token })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            document.getElementById('report-start-date').value = `${yyyy}-${mm}-01`;
+            document.getElementById('report-end-date').value = `${yyyy}-${mm}-${dd}`;
+            
+            document.getElementById('admin-modal').style.display = 'flex';
+            fetchOrdersList(token);
+        } else {
+            alert("Neteisingas raktas!");
+            localStorage.removeItem('gamyba_secret_token');
+        }
+    })
+    .catch(err => {
+        console.error("Klaida jungiantis:", err);
+        alert("Nepavyko susisiekti su serveriu.");
+    });
+}
+
+function fetchOrdersList(token) {
+    const tbody = document.getElementById('orders-tbody');
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;">Kraunama...</td></tr>`;
+
+    fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "getOrdersList", secretToken: token })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success && data.orders) {
+            allLoadedOrders = data.orders;
+            filterOrdersTable();
+        } else {
+            tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:red;">Nepavyko užkrauti užsakymų.</td></tr>`;
+        }
+    })
+    .catch(err => {
+        console.error("Klaida gaunant užsakymus:", err);
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:red;">Ryšio klaida.</td></tr>`;
+    });
+}
+
+function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('tab-active-btn').className = tab === 'active' ? 'tab-btn active' : 'tab-btn';
+    document.getElementById('tab-archive-btn').className = tab === 'archive' ? 'tab-btn active' : 'tab-btn';
+    document.getElementById('select-all-checkbox').checked = false;
+    filterOrdersTable();
+}
+
+function renderOrdersTable(orders) {
+    const tbody = document.getElementById('orders-tbody');
+    if (orders.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;">Nėra užsakymų.</td></tr>`;
+        return;
+    }
+    let html = '';
+    orders.forEach((ord) => {
+        let statusColor = '#3498db';
+        if (ord.status === 'Gamyboje') statusColor = '#e67e22';
+        if (ord.status === 'Baigtas') statusColor = '#27ae60';
+        if (ord.status === 'Atšauktas') statusColor = '#e74c3c';
+        if (ord.status === 'Archyvuotas') statusColor = '#7f8c8d';
+
+        const ordJson = encodeURIComponent(JSON.stringify(ord));
+	const formattedPrice = parseFloat(ord.price || 0).toFixed(2);
+
+        html += `
+            <tr>
+                <td style="text-align:center;"><input type="checkbox" class="order-checkbox" value="${ord.rowIndex}"></td>
+                <td>${ord.date || ''}</td>
+                <td><b>${ord.client || ''}</b></td>
+                <td>${ord.city || ''}</td>
+                <td><b>${ord.profileClean || ord.profile || ''}</b><br><span style="color:#555;">${ord.height || 0} x ${ord.width || 0} mm</span></td>
+                <td>Stiklas: <b>${ord.doorGlass || 'Nėra'}</b><br>Lentynėlės: <span style="color:#2980b9;">${ord.shelfInfo || 'Nėra'}</span></td>
+                <td><b>${ord.quantity || 0} vnt.</b></td>
+                <td><b>${ord.price || 0} €</b></td>
+                <td>
+                    <select onchange="updateOrderStatus(${ord.rowIndex}, this.value)" style="padding:2px; font-size:11px; background:${statusColor}; color:white; border-radius:4px; font-weight:bold;">
+                        <option value="Naujas" ${ord.status === 'Naujas' ? 'selected' : ''}>Naujas</option>
+                        <option value="Gamyboje" ${ord.status === 'Gamyboje' ? 'selected' : ''}>Gamyboje</option>
+                        <option value="Baigtas" ${ord.status === 'Baigtas' ? 'selected' : ''}>Baigtas</option>
+                        <option value="Atšauktas" ${ord.status === 'Atšauktas' ? 'selected' : ''}>Atšauktas</option>
+                        <option value="Archyvuotas" ${ord.status === 'Archyvuotas' ? 'selected' : ''}>Archyvuotas</option>
+                    </select>
+                </td>
+                <td>
+                    <button class="btn-print-item" onclick="printSpecificOrderFromBoard('${ordJson}')">🖨️ Spausdinti</button>
+                    ${ord.status !== 'Archyvuotas' ? `<button class="btn-archive-item" onclick="updateOrderStatus(${ord.rowIndex}, 'Archyvuotas')">Archyvuoti</button>` : ''}
+                    <button class="btn-remove-item" onclick="deleteOrder(${ord.rowIndex})">Ištrinti</button>
+                </td>
+            </tr>
+        `;
+    });
+    tbody.innerHTML = html;
+}
+
+function filterOrdersTable() {
+    const query = document.getElementById('order-search-input').value.toLowerCase().trim();
+    
+    const filteredByTab = allLoadedOrders.filter(ord => {
+        const isArchived = (ord.status === 'Archyvuotas');
+        if (currentTab === 'archive') return isArchived;
+        return !isArchived;
+    });
+
+    const filtered = filteredByTab.filter(ord => {
+        const client = (ord.client || '').toLowerCase();
+        const city = (ord.city || '').toLowerCase();
+        const prof = (ord.profile || '').toLowerCase();
+        const height = String(ord.height || '').toLowerCase();
+        const width = String(ord.width || '').toLowerCase();
+        const doorGlassDims = (ord.doorGlassDims || '').toLowerCase();
+        const shelfDims = (ord.shelfDims || '').toLowerCase();
+        const doorGlass = (ord.doorGlass || '').toLowerCase();
+        const shelfGlass = (ord.shelfGlass || '').toLowerCase();
+        
+        return client.includes(query) || 
+               city.includes(query) || 
+               prof.includes(query) || 
+               height.includes(query) || 
+               width.includes(query) ||
+               doorGlassDims.includes(query) ||
+               shelfDims.includes(query) ||
+               doorGlass.includes(query) ||
+               shelfGlass.includes(query);
+    });
+
+    renderOrdersTable(filtered);
+}
+
+function toggleSelectAll(master) {
+    const checkboxes = document.querySelectorAll('.order-checkbox');
+    checkboxes.forEach(cb => cb.checked = master.checked);
+}
+
+function applyBulkStatus() {
+    const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+    if (checkboxes.length === 0) {
+        alert("Nepasirinkote jokių užsakymų!");
+        return;
+    }
+    const newStatus = document.getElementById('bulk-status-select').value;
+    const token = getOrRequestSecretToken();
+    if (!token) return;
+
+    let rowIndices = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+    fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "bulkUpdateStatus", secretToken: token, rowIndices: rowIndices, status: newStatus })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            fetchOrdersList(token);
+        } else {
+            alert("Klaida atnaujinant būsenas!");
+        }
+    })
+    .catch(err => {
+        console.error("Ryšio klaida:", err);
+    });
+}
+
+function updateOrderStatus(rowIndex, newStatus) {
+    const token = getOrRequestSecretToken();
+    if (!token) return;
+
+    fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "updateStatus", secretToken: token, rowIndex: rowIndex, status: newStatus })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            fetchOrdersList(token);
+        } else {
+            alert("Klaida atnaujinant būseną!");
+            fetchOrdersList(token);
+        }
+    })
+    .catch(err => {
+        console.error("Ryšio klaida:", err);
+    });
+}
+
+function deleteOrder(rowIndex) {
+    if (!confirm("Ar tikrai norite ištrinti šį užsakymą?")) return;
+    const token = getOrRequestSecretToken();
+    if (!token) return;
+
+    fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "deleteOrder", secretToken: token, rowIndex: rowIndex })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            fetchOrdersList(token);
+        } else {
+            alert("Nepavyko ištrinti užsakymo.");
+        }
+    })
+    .catch(err => {
+        console.error("Ryšio klaida:", err);
+    });
+}
+
+function closeAdminBoardModal() {
+    document.getElementById('admin-modal').style.display = 'none';
+}
+
+function downloadReport(reportType) {
+    const token = getOrRequestSecretToken();
+    if (!token) return;
+
+    const startDate = document.getElementById('report-start-date').value;
+    const endDate = document.getElementById('report-end-date').value;
+
+    fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ 
+            action: "generateReport", 
+            secretToken: token, 
+            reportType: reportType, 
+            startDate: startDate, 
+            endDate: endDate 
+        })
+    })
+    .then(res => res.text())
+    .then(csvText => {
+        const blob = new Blob(["\ufeff" + csvText], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${reportType}_ataskaita_${startDate}_iki_${endDate}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    })
+    .catch(err => {
+        console.error("Klaida siunčiant ataskaitos užklausą:", err);
+        alert("Klaida generuojant ataskaitą.");
+    });
+}
+
 function sendToGoogleSheets() {
     if(!GOOGLE_SCRIPT_URL) return;
 
@@ -2090,6 +2480,7 @@ function sendToGoogleSheets() {
     const formattedDate = getFormattedDisplayDate();
     const selectedCity = document.getElementById('miestas').value;
     const userComment = document.getElementById('order-comment').value.trim();
+    const secretToken = localStorage.getItem('gamyba_secret_token') || "";
 
     let itemsToSave = orderCart.length > 0 ? orderCart : [gatherCurrentConfigData()];
 
@@ -2112,9 +2503,10 @@ function sendToGoogleSheets() {
             doorGlass: item.doorGlass,
             doorGlassDims: item.doorGlassDims,
             shelfGlass: item.shelfGlass,
-            shelfThickness: document.getElementById('shelf-glass-thickness').value, // <-- PRIDĖTA ŠI EILUTĖ
+            shelfThickness: item.shelfThickness,
             shelfDims: item.shelfDims,
-            shelfQty: item.shelfQty
+            shelfQty: item.shelfQty,
+            shelfEdges: item.shelfEdges
         };
 
         fetch(GOOGLE_SCRIPT_URL, {
@@ -2129,13 +2521,35 @@ function sendToGoogleSheets() {
 
 function printOrder() {
     let itemsToPrint = orderCart.length > 0 ? [...orderCart] : [gatherCurrentConfigData()];
+    executePrintWindow(itemsToPrint, document.getElementById('client-name').value.trim() || 'Klientas', document.getElementById('client-phone').value.trim(), document.getElementById('miestas').value, getFormattedDisplayDate());
+}
 
-    const clientInput = document.getElementById('client-name').value.trim();
-    const clientPhone = document.getElementById('client-phone').value.trim();
-    const clientName = clientInput !== '' ? clientInput : 'Klientas';
-    const selectedCity = document.getElementById('miestas').value;
-    const orderDateVal = getFormattedDisplayDate();
+function printSpecificOrderFromBoard(encodedOrdStr) {
+    const ord = JSON.parse(decodeURIComponent(encodedOrdStr));
+    
+    let simulatedItem = {
+        profileText: ord.profile || '',
+        dimsShortTxt: `${ord.height || 0}x${ord.width || 0} mm`,
+        totalPrice: parseFloat(ord.price) || 0,
+        summaryHtml: `
+            <div class="result-card">
+                <table class="result-table">
+                    <tr><td><b>Klientas:</b> ${ord.client || ''}</td><td style="text-align:right;"><b>Miestas:</b> ${ord.city || ''}</td></tr>
+                    <tr><td><b>Data:</b> ${ord.date || ''}</td><td style="text-align:right;"><b>Kiekis:</b> ${ord.quantity || 0} vnt.</td></tr>
+                    <tr><td colspan="2"><b>Profilis:</b> ${ord.profile || ''}</td></tr>
+                    <tr><td colspan="2"><b>Gaminio dydis:</b> <b>${ord.height || 0} x ${ord.width || 0} mm</b></td></tr>
+                    <tr><td colspan="2"><b>Stiklas:</b> ${ord.doorGlass || 'Nėra'} (${ord.doorGlassDims || ''})</td></tr>
+                    <tr><td colspan="2"><b>Lentynėlės:</b> ${ord.shelfInfo || 'Nėra'}</td></tr>
+                    <tr><td colspan="2" style="text-align:right; padding-top:6px; border-top: 2px solid #2ecc71;" class="total-price">Viso: ${ord.price || 0} €</td></tr>
+                </table>
+            </div>
+        `
+    };
 
+    executePrintWindow([simulatedItem], ord.client || 'Klientas', '', ord.city || '', ord.date || '');
+}
+
+function executePrintWindow(itemsToPrint, clientName, clientPhone, selectedCity, orderDateVal) {
     let fullPrintHtml = `
         <html>
             <head>
@@ -2191,7 +2605,7 @@ function printOrder() {
                             print-color-adjust: exact; 
                         }
                         .controls, button { display: none !important; }
-                        .print-item-wrapper { page-break-inside: avoid; break-inside: avoid; margin-bottom: 10px; }
+                        .print-item-wrapper { page-break-inside: avoid; break-inside: avoid; margin-bottom: 10mm; }
                     }
                 </style>
             </head>

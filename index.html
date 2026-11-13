@@ -2096,23 +2096,25 @@ function sendToGoogleSheets() {
     itemsToSave.forEach(item => {
         const payload = {
             action: "saveData",
+            secretToken: secretToken,
             orderDate: formattedDate,
-            clientName: `${clientName} ${clientPhone ? '(' + clientPhone + ')' : ''} (${selectedCity})`,
+            clientName: `${clientName} ${clientPhone ? '(' + clientPhone + ')' : ''}`,
             city: selectedCity,
-            height: item.height || doorDimensions.main.h,
-            width: item.width || doorDimensions.main.w,
-            quantity: item.qtyText || "1",
+            height: item.height,
+            width: item.width,
+            cutH: item.cutH,
+            cutW: item.cutW,
+            quantity: item.qtyText,
+            profileCode: item.profileCode,
             profile: item.profileText,
-            doorGlass: item.doorGlass || "",
-            doorGlassDims: item.doorGlassDims || "",
-            shelfGlass: item.shelfGlass || "Nėra",
-            shelfDims: item.shelfDims || "Nėra",
-            shelfThickness: item.shelfThickness || "Nėra",
-            shelfQty: item.shelfQty || 0,
-            shelfEdges: item.shelfEdges || "Nėra",
             totalPrice: item.totalPrice,
             comment: userComment,
-            summaryHtml: item.summaryHtml
+            doorGlass: item.doorGlass,
+            doorGlassDims: item.doorGlassDims,
+            shelfGlass: item.shelfGlass,
+            shelfThickness: document.getElementById('shelf-glass-thickness').value, // <-- PRIDĖTA ŠI EILUTĖ
+            shelfDims: item.shelfDims,
+            shelfQty: item.shelfQty
         };
 
         fetch(GOOGLE_SCRIPT_URL, {

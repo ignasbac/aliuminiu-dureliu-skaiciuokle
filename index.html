@@ -730,7 +730,7 @@ const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0dkSvbPhPp8
 
 let orderCart = [];
 let allLoadedOrders = [];
-let currentTab = 'active'; // 'active' arba 'archive'
+let currentTab = 'active';
 
 function setTodayDateInput() {
     const today = new Date();
@@ -2008,6 +2008,21 @@ function gatherCurrentConfigData() {
 
     let shelfInfoFullStr = shelfQty > 0 ? `${shelfQty} vnt., ${shelfDimsDesc}, ${shelfGlassDesc} (${shelfEdgesStr})` : 'Nėra';
 
+    const configSnapshot = {
+        h: h,
+        w: w,
+        mirror: mirror,
+        hMirror: hMirror,
+        wMirror: wMirror,
+        qtyMain: qtyMain,
+        qtyMirror: qtyMirror,
+        mainSide: mainSide,
+        hinges: hinges,
+        handleInfo: handleInfo,
+        millingHandleInfo: millingHandleInfo,
+        summaryContent: summaryHtmlContent
+    };
+
     return {
         profileText: `${profileText} (${qtyDetailsText})`,
         dimsShortTxt: dimsShortTxt,
@@ -2028,6 +2043,7 @@ function gatherCurrentConfigData() {
         shelfInfoFull: shelfInfoFullStr,
         totalPrice: totalOrderPrice,
         summaryHtml: fullCardWithDrawings,
+        configJson: JSON.stringify(configSnapshot),
         hinges: hinges,
         handleInfo: handleInfo,
         millingHandleInfo: millingHandleInfo
@@ -2286,7 +2302,7 @@ function renderOrdersTable(orders) {
         if (ord.status === 'Archyvuotas') statusColor = '#7f8c8d';
 
         const ordJson = encodeURIComponent(JSON.stringify(ord));
-	const formattedPrice = parseFloat(ord.price || 0).toFixed(2);
+        const formattedPrice = parseFloat(ord.price || 0).toFixed(2);
 
         html += `
             <tr>
@@ -2297,7 +2313,7 @@ function renderOrdersTable(orders) {
                 <td><b>${ord.profileClean || ord.profile || ''}</b><br><span style="color:#555;">${ord.height || 0} x ${ord.width || 0} mm</span></td>
                 <td>Stiklas: <b>${ord.doorGlass || 'Nėra'}</b><br>Lentynėlės: <span style="color:#2980b9;">${ord.shelfInfo || 'Nėra'}</span></td>
                 <td><b>${ord.quantity || 0} vnt.</b></td>
-                <td><b>${ord.price || 0} €</b></td>
+                <td><b>${formattedPrice} €</b></td>
                 <td>
                     <select onchange="updateOrderStatus(${ord.rowIndex}, this.value)" style="padding:2px; font-size:11px; background:${statusColor}; color:white; border-radius:4px; font-weight:bold;">
                         <option value="Naujas" ${ord.status === 'Naujas' ? 'selected' : ''}>Naujas</option>
@@ -2506,7 +2522,8 @@ function sendToGoogleSheets() {
             shelfThickness: item.shelfThickness,
             shelfDims: item.shelfDims,
             shelfQty: item.shelfQty,
-            shelfEdges: item.shelfEdges
+            shelfEdges: item.shelfEdges,
+            configJson: item.configJson
         };
 
         fetch(GOOGLE_SCRIPT_URL, {
@@ -2530,8 +2547,33 @@ function printSpecificOrderFromBoard(encodedOrdStr) {
     let simulatedItem = {
         profileText: ord.profile || '',
         dimsShortTxt: `${ord.height || 0}x${ord.width || 0} mm`,
-        totalPrice: parseFloat(ord.price) || 0,
-        summaryHtml: `
+        totalPrice: parseFloat(ord.price || 0),
+        summaryHtml: ''
+    };
+
+    if (ord.configJson) {
+        try {
+            const cfg = JSON.parse(ord.configJson);
+            const scale = Math.min(250 / Math.max(1, cfg.w, cfg.mirror ? cfg.wMirror : 0), 320 / Math.max(1, cfg.h, cfg.mirror ? cfg.hMirror : 0));
+            
+            const tempDiv = document.createElement('div');
+            tempDiv.style.display = 'flex';
+            tempDiv.style.gap = '20px';
+            tempDiv.style.alignItems = 'flex-start';
+
+            tempDiv.appendChild(createDrawing('Pagrindinė ('+cfg.mainSide+')', 'main', cfg.w, cfg.h, scale, cfg.mainSide, cfg.hinges, cfg.qtyMain, 'qtyMain', cfg.handleInfo, cfg.millingHandleInfo));
+            if (cfg.mirror) {
+                const otherSide = cfg.mainSide === 'kaire' ? 'desine' : 'kaire';
+                tempDiv.appendChild(createDrawing('Veidrodinė ('+otherSide+')', 'mirror', cfg.wMirror, cfg.hMirror, scale, otherSide, cfg.hinges, cfg.qtyMirror, 'qtyMirror', cfg.handleInfo, cfg.millingHandleInfo));
+            }
+
+            simulatedItem.summaryHtml = cfg.summaryContent.split('<div style="display:flex;')[0] + `<div style="display:flex; gap:15px; justify-content:center; margin-top:15px; flex-wrap:wrap;">${tempDiv.innerHTML}</div>`;
+        } catch (e) {
+            console.error("Klaida atkuriant brėžinį iš JSON:", e);
+            simulatedItem.summaryHtml = `<div class="result-card"><p>Brėžinio nepavyko atkurti.</p></div>`;
+        }
+    } else {
+        simulatedItem.summaryHtml = `
             <div class="result-card">
                 <table class="result-table">
                     <tr><td><b>Klientas:</b> ${ord.client || ''}</td><td style="text-align:right;"><b>Miestas:</b> ${ord.city || ''}</td></tr>
@@ -2540,11 +2582,11 @@ function printSpecificOrderFromBoard(encodedOrdStr) {
                     <tr><td colspan="2"><b>Gaminio dydis:</b> <b>${ord.height || 0} x ${ord.width || 0} mm</b></td></tr>
                     <tr><td colspan="2"><b>Stiklas:</b> ${ord.doorGlass || 'Nėra'} (${ord.doorGlassDims || ''})</td></tr>
                     <tr><td colspan="2"><b>Lentynėlės:</b> ${ord.shelfInfo || 'Nėra'}</td></tr>
-                    <tr><td colspan="2" style="text-align:right; padding-top:6px; border-top: 2px solid #2ecc71;" class="total-price">Viso: ${ord.price || 0} €</td></tr>
+                    <tr><td colspan="2" style="text-align:right; padding-top:6px; border-top: 2px solid #2ecc71;" class="total-price">Viso: ${parseFloat(ord.price || 0).toFixed(2)} €</td></tr>
                 </table>
             </div>
-        `
-    };
+        `;
+    }
 
     executePrintWindow([simulatedItem], ord.client || 'Klientas', '', ord.city || '', ord.date || '');
 }
